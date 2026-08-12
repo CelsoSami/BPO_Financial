@@ -36,7 +36,7 @@ const openSheet = (title, bodyHtml, opts = {}) => {
   const sheet = document.getElementById('sheet');
   const backdrop = document.getElementById('sheet-backdrop');
   clear(sheet);
-  sheet.appendChild(el(`
+  sheet.appendChild(els(`
     <div class="sheet-grip"></div>
     <div class="sheet-head">
       <h3>${title}</h3>
@@ -87,7 +87,7 @@ CRUD.dashboard = async (root) => {
   const orgId = App.getOrg();
   const months = lastNMonths(6);
   clear(root);
-  root.appendChild(el(`
+  root.appendChild(els(`
     <div class="view-header">
       <h1>Dashboard</h1>
       <p id="dash-org"></p>
@@ -118,11 +118,11 @@ CRUD.dashboard = async (root) => {
     grid.appendChild(card);
   });
   root.querySelectorAll('.skel').forEach(s => s.remove());
-  root.insertBefore(grid, root.querySelector('.chart-box') || null);
-  mountIcons(root);
-  kpis.forEach((x, i) => animateNumber(document.getElementById(`kpi-${i}`), x.v, fmtCompact));
+root.insertBefore(grid, root.querySelector('.chart-box') || null);
+    mountIcons(root);
+    kpis.forEach((x, i) => animateNumber(document.getElementById(`kpi-${i}`), x.v, fmtCompact));
 
-  root.appendChild(el(`
+  root.appendChild(els(`
     <div class="chart-box">
       <div class="chart-title">Fluxo de Caixa (6 meses)</div>
       <canvas id="dash-area"></canvas>
@@ -187,7 +187,7 @@ CRUD.fluxo = async (root) => {
   const orgId = App.getOrg();
   const months = lastNMonths(6);
   clear(root);
-  root.appendChild(el(`
+  root.appendChild(els(`
     <div class="view-header"><h1>Fluxo de Caixa</h1><p>Projeção e movimentação real por mês</p></div>
     ${cardSkeleton()}
   `));
@@ -206,7 +206,7 @@ CRUD.fluxo = async (root) => {
   </div>`);
   root.appendChild(run);
 
-  root.appendChild(el(`
+  root.appendChild(els(`
     <div class="chart-box"><div class="chart-title">Saldo Acumulado</div><canvas id="fluxo-area"></canvas></div>
     <div class="chart-box"><div class="chart-title">Entradas × Saídas</div><canvas id="fluxo-bars"></canvas></div>
   `));
@@ -252,7 +252,7 @@ let _txFilter = { q: '', kind: '', month: '' };
 CRUD.transacoes = async (root) => {
   const orgId = App.getOrg();
   clear(root);
-  root.appendChild(el(`
+  root.appendChild(els(`
     <div class="view-header"><h1>Transações</h1><p>Lançamentos de receitas e despesas</p>
       <div class="filterbar">
         <input type="search" id="tx-search" placeholder="Buscar..." value="${esc(_txFilter.q)}" style="min-width:120px;flex:1">
@@ -273,7 +273,7 @@ CRUD.transacoes = async (root) => {
   const reload = async () => {
     const box = root.querySelector('#tx-list');
     clear(box);
-    box.appendChild(el(cardSkeleton(1)));
+    box.appendChild(els(cardSkeleton(1)));
     const filters = {};
     if (_txFilter.kind) filters.kind = _txFilter.kind;
     let txs = await dbSelect('transactions', { orgId, filters, order: { col: 'date', asc: false }, limit: 400 });
@@ -440,7 +440,7 @@ let _invFilter = 'open';
 CRUD.contas = async (root) => {
   const orgId = App.getOrg();
   clear(root);
-  root.appendChild(el(`
+  root.appendChild(els(`
     <div class="view-header"><h1>Contas</h1><p>Contas a pagar e a receber</p>
       <div class="seg" id="inv-seg">
         <button data-f="open" class="active">Em aberto</button>
@@ -460,7 +460,7 @@ CRUD.contas = async (root) => {
 
   const reload = async () => {
     const box = root.querySelector('#inv-list');
-    clear(box); box.appendChild(el(cardSkeleton()));
+    clear(box); box.appendChild(els(cardSkeleton()));
     let inv = await dbSelect('invoices', { orgId, order: { col: 'due_date', asc: true }, limit: 400 });
     if (_invFilter === 'open') inv = inv.filter(i => !['paid','cancelled'].includes(i.status));
     if (_invFilter === 'paid') inv = inv.filter(i => i.status === 'paid');
@@ -472,7 +472,7 @@ CRUD.contas = async (root) => {
     const pay = inv.filter(i => i.kind === 'payable');
     const sum = (arr) => arr.reduce((a, i) => a + Number(i.amount), 0);
 
-    box.appendChild(el(`
+    box.appendChild(els(`
       <div class="grid cols-2" style="margin-bottom:4px">
         <div class="card"><div class="card-title">A Receber</div><div class="card-value sm" style="color:var(--ok)">${fmtCompact(sum(rec))}</div><div class="card-sub">${rec.length} títulos</div></div>
         <div class="card"><div class="card-title">A Pagar</div><div class="card-value sm" style="color:var(--danger)">${fmtCompact(sum(pay))}</div><div class="card-sub">${pay.length} títulos</div></div>
@@ -613,13 +613,13 @@ CRUD.invDetail = async (root, id) => {
 CRUD.clientes = async (root) => {
   const orgId = App.getOrg();
   clear(root);
-  root.appendChild(el(`
+  root.appendChild(els(`
     <div class="view-header"><h1>Clientes</h1><p>Clientes, fornecedores e contatos</p></div>
     <div id="cli-list"></div>
   `));
   const box = root.querySelector('#cli-list');
   const reload = async () => {
-    clear(box); box.appendChild(el(cardSkeleton()));
+    clear(box); box.appendChild(els(cardSkeleton()));
     const cli = await dbSelect('clients', { orgId, order: { col: 'name', asc: true } });
     const [txs] = await Promise.all([dbSelect('transactions', { orgId, filters: { status: 'posted' }, limit: 600 })]);
     clear(box);
@@ -724,7 +724,7 @@ CRUD.config = async (root) => {
   const user = (await sb.auth.getSession()).data.session?.user;
   const profile = user ? (await dbSelect('profiles', { filters: { id: user.id } }))[0] : null;
 
-  root.appendChild(el(`
+  root.appendChild(els(`
     <div class="view-header"><h1>Configurações</h1><p>Perfil, equipe e organização</p></div>
     <div class="card">
       <div class="card-title">Minha Conta</div>

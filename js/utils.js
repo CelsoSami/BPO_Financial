@@ -77,6 +77,14 @@ const el = (html) => {
   return t.content.firstElementChild;
 };
 
+// Como el(), porém retorna um DocumentFragment com TODOS os nós raiz
+// (necessário quando o template tem 2+ elementos de nível superior)
+const els = (html) => {
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content;
+};
+
 const clear = (node) => { while (node.firstChild) node.removeChild(node.firstChild); };
 
 const debounce = (fn, ms = 250) => {

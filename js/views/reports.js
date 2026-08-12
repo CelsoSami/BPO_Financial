@@ -145,7 +145,7 @@ REPORTS.render = async (root) => {
   const orgId = App.getOrg();
   const months = lastNMonths(_biMonths);
   clear(root);
-  root.appendChild(el(`
+  root.appendChild(els(`
     <div class="view-header">
       <h1>Relatórios & BI</h1>
       <p>Análise gerencial rápida do período selecionado</p>
@@ -193,7 +193,7 @@ REPORTS.render = async (root) => {
     `));
 
     // --- Gráfico de fluxo ---
-    wrap.appendChild(el(`
+    wrap.appendChild(els(`
       <div class="chart-box">
         <div class="chart-title">Fluxo de Caixa Mensal</div>
         <canvas id="bi-area"></canvas>
@@ -235,7 +235,7 @@ REPORTS.render = async (root) => {
 
     // --- Top clientes + ações de export ---
     const topClients = REPORTS.topClients(bundle, 5);
-    wrap.appendChild(el(`
+    wrap.appendChild(els(`
       <div class="card">
         <div class="card-title">Top Clientes (receita)</div>
         <div class="list" style="margin-top:10px" id="bi-clients"></div>

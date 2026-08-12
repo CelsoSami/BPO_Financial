@@ -118,7 +118,7 @@ const App = {
 
     const root = document.getElementById('view');
     clear(root);
-    root.appendChild(el(`<div class="view-header"><h1>${names[view]}</h1></div><div class="skel" style="min-height:200px"></div>`));
+    root.appendChild(els(`<div class="view-header"><h1>${names[view]}</h1></div><div class="skel" style="min-height:200px"></div>`));
 
     try {
       const map = {
