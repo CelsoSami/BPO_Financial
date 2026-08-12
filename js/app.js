@@ -143,6 +143,9 @@ const App = {
     if (!data.session) return this.showAuth();
     this.user = data.session.user;
     this.showApp();
+    const valid = { dashboard: 1, fluxo: 1, transacoes: 1, contas: 1, clientes: 1, relatorios: 1, config: 1 };
+    const fromHash = location.hash.replace('#/', '');
+    if (valid[fromHash]) this.view = fromHash;
     await this.restoreOrg();
     await this.go(this.view);
     this.loadDrawerMeta();
