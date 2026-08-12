@@ -10,7 +10,8 @@ do usuário. O RLS do Supabase garante que os dados caiam apenas na
 organização do dono.
 
 Uso:
-    python seed_demo.py
+    set SUPABASE_URL=https://SEU-PROJECT.supabase.co
+    set SUPABASE_ANON_KEY=sb_publishable_SUA_CHAVE
     python seed_demo.py --email voce@empresa.com --senha "sua-senha"
 """
 
@@ -32,8 +33,20 @@ try:
 except Exception:
     pass
 
-SUPABASE_URL = "https://sqpmjxtswdheonabubau.supabase.co"
-ANON_KEY = "sb_publishable_iDW91XSUr9NzEjjAQTCwdw_9lRoiOp8"
+import os
+
+# Credenciais via variáveis de ambiente (nunca versionar).
+# Ex.:
+#   set SUPABASE_URL=https://SEU-PROJECT.supabase.co
+#   set SUPABASE_ANON_KEY=sb_publishable_SUA_CHAVE
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+
+if not SUPABASE_URL or not ANON_KEY:
+    raise SystemExit(
+        "Credenciais ausentes. Defina SUPABASE_URL e SUPABASE_ANON_KEY "
+        "como variáveis de ambiente e tente novamente."
+    )
 
 BASE = f"{SUPABASE_URL}/rest/v1"
 CTX = ssl.create_default_context()
@@ -75,7 +88,7 @@ def auth_token(email, password):
 
 def main():
     ap = argparse.ArgumentParser(description="Seed de demonstração do C2 Finance")
-    ap.add_argument("--email", default="celso_scjunior@hotmail.com")
+    ap.add_argument("--email", required=True, help="E-mail do usuário (obrigatório)")
     ap.add_argument("--senha", default="")
     ap.add_argument("--org", default="C2 Finance (Demonstração)")
     args = ap.parse_args()

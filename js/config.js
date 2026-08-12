@@ -1,12 +1,17 @@
 // ============================================================
 // C2 Finance - Configuração
-// Credenciais Publishable (seguras para o cliente). 
-// A segurança dos dados é garantida por RLS no banco: cada
-// usuário enxerga apenas as organizações em que é membro.
+// Credenciais PUBLISHABLE (seguras para o cliente) vêm de
+// js/config.local.js (NÃO versionado). Sem esse arquivo o app
+// exibe a tela de configuração.
+//
+// Segurança real é garantida por RLS no banco: cada usuário
+// enxerga apenas as organizações em que é membro.
 // ============================================================
 
-const SUPABASE_URL = 'https://sqpmjxtswdheonabubau.supabase.co';
-const SUPABASE_KY = 'sb_publishable_iDW91XSUr9NzEjjAQTCwdw_9lRoiOp8';
+const __C2_ENV = (typeof window !== 'undefined' && window.__C2__) || {};
+
+const SUPABASE_URL = __C2_ENV.supabaseUrl || '';
+const SUPABASE_KY = __C2_ENV.supabaseAnonKey || '';
 
 const APP_NAME = 'C2 Finance';
 const CURRENCY = 'BRL';

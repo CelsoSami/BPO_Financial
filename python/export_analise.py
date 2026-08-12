@@ -9,6 +9,8 @@ Baixa transações e faturas de uma organização via REST e gera:
 Também imprime um resumo rápido qualitativo no terminal.
 
 Uso:
+    set SUPABASE_URL=https://SEU-PROJECT.supabase.co
+    set SUPABASE_ANON_KEY=sb_publishable_SUA_CHAVE
     python export_analise.py --email seu@email.com --senha s3nh4
     python export_analise.py --org-id <uuid> --email ... --senha ...
 """
@@ -28,8 +30,21 @@ try:
 except Exception:
     pass
 
-SUPABASE_URL = "https://sqpmjxtswdheonabubau.supabase.co"
-ANON_KEY = "sb_publishable_iDW91XSUr9NzEjjAQTCwdw_9lRoiOp8"
+import os
+
+# Credenciais via variáveis de ambiente (nunca versionar).
+# Ex.:
+#   set SUPABASE_URL=https://SEU-PROJECT.supabase.co
+#   set SUPABASE_ANON_KEY=sb_publishable_SUA_CHAVE
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+
+if not SUPABASE_URL or not ANON_KEY:
+    raise SystemExit(
+        "Credenciais ausentes. Defina SUPABASE_URL e SUPABASE_ANON_KEY "
+        "como variáveis de ambiente e tente novamente."
+    )
+
 BASE = f"{SUPABASE_URL}/rest/v1"
 CTX = ssl.create_default_context()
 

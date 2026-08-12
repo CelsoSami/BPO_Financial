@@ -1,132 +1,162 @@
 # C2 Finance — BPO Financeiro Multi-tenant
 
-Aplicação web **mobile-first** de gestão e BPO financeiro. Controle contas a pagar/receber, fluxo de caixa, clientes e análises gerenciais com visualização rápida de dados — ideal para profissionais que prestam BPO a múltiplas organizações.
+Aplicação web de **gestão e BPO financeiro** para profissionais que atendem **múltiplas organizações**. Controle de contas a pagar/receber, fluxo de caixa, clientes, equipe e análises gerenciais com visualização rápida de dados e gráficos animados.
 
-Cada usuário enxerga **apenas os dados das organizações em que é membro** (isolamento via Row Level Security no Supabase).
+- **Isolamento por organização**: cada usuário enxerga apenas os dados das organizações em que é membro (Row Level Security).
+- **Pronto para vender**: modelos de negócio por organização, convite de membros e papéis de acesso.
 
 ## Funcionalidades
 
-- 🔐 **Segurança multi-tenant** — dados isolados por organização (RLS)
-- 🌙 **Tema dark padrão** — gradiente anil → roxo com lua em contorno branco
-- ☀️ **Toggle para tema day** — gradiente verde claro → azul celeste com sol
-- 📱 **100% mobile-first** — PWA instalável, menu hambúrguer com menu lateral
-- 📊 **Dashboard + Relatórios & BI** — gráficos em canvas animados (sem libs)
+- 🔐 **Multi-tenant seguro** — dados isolados por organização via RLS
+- 🌙 **Tema dark estilo Dracula** — gradiente anil → roxo, lua em contorno branco
+- ☀️ **Toggle de tema deslizante** — troca para o tema dia (verde → azul) com sol
+- 🖥️ **Desktop-first** — sidebar fixa, modais centralizados; adaptado para mobile
+- 📊 **Dashboard + Relatórios & BI** — gráficos em canvas animados (sem libs externas)
 - 💸 **Transações** — receitas/despesas com categorias, contas e clientes
-- 🧾 **Contas a pagar/receber** — faturas, vencimentos e alertas
+- 🧾 **Contas a pagar/receber** — faturas, vencimentos e alertas de atraso
 - 👥 **Clientes e fornecedores**
-- 🏦 **Múltiplas organizações por usuário** — ideal para profissionais de BPO
-- 👤 **Equipe** — convite de membros com papéis (owner/admin/viewer)
-- 📤 **Exportação CSV** — transações e contas (Excel / Python / Power BI)
+- 🏦 **Múltiplas organizações por usuário** — ideal para BPO
+- 👤 **Equipe** — convite de membros com papéis (owner / admin / member / viewer)
+- 📤 **Exportação CSV** — transações e contas (Excel, Python, Power BI)
+- 💡 **Insights automáticos** — alertas de margem, vencidos e principais fontes
 
 ## Tecnologias
 
-- **Front-end:** HTML, CSS e JavaScript puros (sem frameworks), PWA
-- **Backend:** Supabase (Auth + Postgres + Row Level Security)
-- **Análise:** scripts em Python para exportação e análise de dados
+- **Front-end:** HTML, CSS e JavaScript puros (sem frameworks) · PWA
+- **Backend:** Supabase — Auth + Postgres + Row Level Security
+- **Análise:** scripts Python (padrão) para seed e exportação/KPIs
 
 ---
 
-## 1. Configuração do banco de dados (1ª vez)
+## 1. Pré-requisitos
 
-1. No painel do Supabase: **Authentication → Users**, confirme o usuário criado (ver PDF de confirmação no e-mail) e ajuste a senha se quiser.
-2. **SQL Editor → New query** → cole o conteúdo de **`supabase/schema.sql`** → **Run**.
-3. O script é idempotente (`if not exists` / `drop policy if exists`). Rode novamente sempre que atualizar o schema.
+- Uma conta no [Supabase](https://supabase.com) com um projeto criado.
+- Python 3.10+ (opcional, apenas para as ferramentas de dados).
+- Qualquer servidor estático (Python, `npx serve`, GitHub Pages, Netlify, Vercel…).
 
-> ⚠️ O usuário admin já foi criado:
-> `celso_scjunior@hotmail.com` — confira o e-mail de confirmação no Hotmail antes de entrar.
+## 2. Configuração (1ª vez)
 
-## 2. Rodando localmente
+### 2.1. Banco de dados
+
+1. No painel do Supabase, abra **SQL Editor → New query**.
+2. Cole o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e execute **Run**.
+3. O script é idempotente (`if not exists` / `drop policy if exists`). Reexecute sempre que atualizar o schema.
+
+Crie os usuários das organizações em **Authentication → Users** (ou pelo cadastro na tela de login do app).
+
+### 2.2. Credenciais do front-end
+
+O app lê a configuração de `js/config.local.js` (arquivo **não versionado**). Copie o modelo e preencha com os dados do seu projeto:
+
+```
+copy js/config.local.example.js js/config.local.js
+```
+
+```js
+window.__C2__ = {
+  supabaseUrl: 'https://SEU-PROJECT.supabase.co',
+  supabaseAnonKey: 'sb_publishable_SUA_CHAVE_ANONIMA'
+};
+```
+
+> `supabaseUrl` e a chave aparecem em **Settings → API** do seu projeto. A chave anônima/publishable é pública por design — a segurança real dos dados vem das policies RLS do banco. Nunca cole a **service_role key** no front-end.
+
+## 3. Rodando localmente
 
 Serve a pasta em um servidor estático:
 
 ```bash
-# com Python + venv (Windows)
-..\.venv\Scripts\python.exe -m http.server 8080
+python -m http.server 8080
 # ou
 npx serve
 ```
 
 Abra `http://localhost:8080`.
 
-> O app precisa que o schema esteja ativo para carregar dados. Se vir a tela de "configuração do banco", execute o passo 1 e recarregue.
+> Se o app abrir a tela de "configuração do banco", verifique o passo 2.1 e recarregue com **Ctrl+Shift+R**.
 
-## 3. Seed de dados de demonstração (opcional)
+## 4. Ferramentas de dados (Python)
 
-Gera uma organização com clientes, contas, 6 meses de transações e faturas:
-
-```bash
-..\.venv\Scripts\python.exe python\seed_demo.py --email celso_scjunior@hotmail.com --senha "SUA-SENHA"
-```
-
-## 4. Exportação e análise com Python (cientista de dados)
+As credenciais são lidas de **variáveis de ambiente** (nunca versionadas):
 
 ```bash
-..\.venv\Scripts\python.exe python\export_analise.py --email seu@email.com --senha "SENHA"
+set SUPABASE_URL=https://SEU-PROJECT.supabase.co
+set SUPABASE_ANON_KEY=sb_publishable_SUA_CHAVE_ANONIMA
 ```
 
-Gera `export_transacoes.csv`, `export_contas.csv` e `relatorio.json` além de um resumo executivo no terminal (receitas, despesas, resultado, margem, top categorias).
+### 4.1. Dados de demonstração (opcional)
 
-## 5. Publicação no GitHub Pages
+Cria uma organização com clientes, contas, 6 meses de transações e faturas:
+
+```bash
+python python\seed_demo.py --email seu@email.com --senha "sua-senha"
+```
+
+### 4.2. Exportação e análise
+
+Baixa transações e contas de uma organização e gera `export_transacoes.csv`, `export_contas.csv` e `relatorio.json`, além de um resumo executivo no terminal (receitas, despesas, resultado, margem e top categorias):
+
+```bash
+python python\export_analise.py --email seu@email.com --senha "sua-senha" [--org-id <uuid>]
+```
+
+## 5. Publicação
+
+O app é estático e pode ir para GitHub Pages, Netlify, Vercel, etc.
+
+Exemplo com GitHub Pages:
 
 ```bash
 git init
 git add .
 git commit -m "C2 Finance - BPO Financeiro multi-tenant"
 git branch -M main
-# crie o repositório no GitHub (ex.: C2_Finance)
-git remote add origin https://github.com/CelsoSami/C2_Finance.git
+git remote add origin <URL-DO-SEU-REPOSITORIO>
 git push -u origin main
 ```
 
-No GitHub: **Settings → Pages → Source: Deploy from a branch → main → / (root)**. Pronto: `https://celsosami.github.io/C2_Finance/`.
+No GitHub: **Settings → Pages → Source: Deploy from a branch → main → / (root)**.
 
-### Integração Supabase (opcional, recomenda-se só para manter schema versionado)
-
-```bash
-# dentro da pasta do projeto
-npx supabase login
-npx supabase init
-npx supabase link --project-ref sqpmjxtswdheonabubau
-npx supabase db push   # aplica supabase/schema.sql
-```
-
-## Segurança (como cada usuário vê só o que pertence à sua organização)
+## Segurança (como cada usuário vê só o que é da sua organização)
 
 - Toda tabela de negócio carrega `org_id`.
-- **Row Level Security** via funções `is_member(org_id)` e `current_user_orgs()`.
-- Membros são gerenciados por funções `SECURITY DEFINER` (`create_organization`, `invite_member`, `remove_member`) que validam papéis antes de alterar.
-- A chave usada no front-end é a **publishable** (pública por design); o acesso real é governado pelas policies do banco.
-- Convites exigem que o convidado já possua conta no sistema (o e-mail é o vínculo).
+- **Row Level Security** via function `is_member(org_id)`.
+- Membros são gerenciados por funcões `SECURITY DEFINER` (`create_organization`, `invite_member`, `remove_member`) que validam papéis antes de qualquer alteração.
+- O front-end usa apenas a chave **publishable** (pública por design).
+- A exclusão de uma organização só é permitida ao `owner`.
+
+### Boas práticas ao publicar o repositório
+
+- **Nunca** suba `js/config.local.js`, `.env` ou qualquer arquivo com credenciais reais
+- **Nunca** inclua a **service_role key** ou a string de conexão do banco em código público
+- Se algum segredo vazar, **rotacione a chave** no painel do Supabase imediatamente
 
 ## Estrutura
 
 ```
 BPO_Financial/
-├── index.html            # SPA (login + app)
-├── manifest.json         # PWA
-├── icons/                # ícones 192/512
-├── css/style.css         # temas + animações + mobile
+├── index.html              # SPA (login + app)
+├── manifest.json           # PWA
+├── icons/                  # ícones 192/512
+├── css/style.css           # temas (Dracula/dia) + animações + desktop/mobile
 ├── js/
-│   ├── config.js         # Supabase (chave publishable)
-│   ├── utils.js          # moeda, data, ícones, DOM
-│   ├── supabaseClient.js # cliente + helpers de dados
-│   ├── theme.js          # toggle lua/sol (dark/day)
-│   ├── charts.js         # gráficos canvas animados
-│   ├── app.js            # boot, sessão, navegação
+│   ├── config.local.example.js # modelo de credenciais (não versionado)
+│   ├── config.local.js      # credenciais reais — NUNCA versionar
+│   ├── config.js           # configuração (lê js/config.local.js)
+│   ├── utils.js            # moeda, data, ícones, DOM
+│   ├── supabaseClient.js   # cliente + helpers de dados
+│   ├── theme.js            # toggle lua/sol (dark/day)
+│   ├── charts.js           # gráficos canvas animados
+│   ├── app.js              # boot, sessão, navegação
 │   └── views/
-│       ├── reports.js    # BI / relatórios / insights
-│       └── crud.js       # dashboard, fluxo, transações, contas, clientes, config
-├── supabase/schema.sql   # schema completo + RLS (rodar no SQL Editor)
+│       ├── reports.js      # BI / relatórios / insights
+│       └── crud.js         # dashboard, fluxo, transações, contas, clientes, config
+├── supabase/schema.sql     # schema completo + RLS (rodar no SQL Editor)
 ├── python/
-│   ├── seed_demo.py      # gera dados de demonstração
-│   ├── export_analise.py # exporta CSV + KPIs
-│   ├── make_icons.py     # gera ícones PNG do PWA
+│   ├── seed_demo.py        # dados de demonstração
+│   ├── export_analise.py   # exporta CSV + KPIs
+│   ├── make_icons.py       # gera ícones PNG do PWA
 │   └── requirements.txt
+├── .gitignore              # protege credenciais e arquivos locais
 └── README.md
 ```
-
-## Privacidade
-
-- O repositório é público: **não suba senhas, service role key ou URLs sensíveis**.
-- No `js/config.js` está apenas a chave publishable (segura para clientes).
-- A senha do usuário é de responsabilidade do dono do projeto. Altere-a em Authentication → Users após o primeiro acesso.
