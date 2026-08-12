@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
   <div id="home" class="sky layer"></div>
@@ -104,6 +104,7 @@
           <button class="nav-item" data-view="contas"><span class="nav-ico" data-i="invoice"></span>Contas a Pagar / Receber</button>
           <button class="nav-item" data-view="clientes"><span class="nav-ico" data-i="users"></span>Clientes</button>
           <button class="nav-item" data-view="relatorios"><span class="nav-ico" data-i="chart"></span>Relatórios & BI</button>
+          <button class="nav-item admin-only" data-view="usuarios"><span class="nav-ico" data-i="shield"></span>Usuários</button>
           <button class="nav-item" data-view="config"><span class="nav-ico" data-i="gear"></span>Configurações</button>
         </nav>
         <div class="drawer-foot">
@@ -120,6 +121,7 @@
       <button class="tabbar-item" data-view="fluxo"><span data-i="trend"></span><label>Fluxo</label></button>
       <button class="tabbar-item fab-slot"><span data-i="plus" class="fab-inner"></span></button>
       <button class="tabbar-item" data-view="contas"><span data-i="invoice"></span><label>Contas</label></button>
+      <button class="tabbar-item admin-only" data-view="usuarios"><span data-i="shield"></span><label>Equipe</label></button>
       <button class="tabbar-item" data-view="config"><span data-i="gear"></span><label>Ajustes</label></button>
     </nav>
     <button id="fab" class="fab" aria-label="Nova transação"><span data-i="plus" class="fab-inner"></span></button>
@@ -136,11 +138,12 @@
   <script src="js/config.local.js?v=4"></script>
   <script src="js/config.js?v=4"></script>
   <script src="js/utils.js?v=4"></script>
-  <script src="js/supabaseClient.js?v=3"></script>
+  <script src="js/supabaseClient.js?v=4"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/charts.js?v=3"></script>
   <script src="js/views/reports.js?v=4"></script>
-  <script src="js/views/crud.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="js/views/crud.js?v=5"></script>
+  <script src="js/views/users.js?v=1"></script>
+  <script src="js/app.js?v=5"></script>
 </body>
 </html>

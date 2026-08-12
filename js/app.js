@@ -7,6 +7,7 @@ const App = {
   view: 'dashboard',
   orgId: null,
   user: null,
+  role: 'member',
   _orgName: '—',
 
   init() {
@@ -96,6 +97,10 @@ const App = {
       if (v === 'transacoes') return await CRUD.txForm(document.getElementById('view'));
       if (v === 'contas') return await CRUD.invForm(document.getElementById('view'));
       if (v === 'clientes') return await CRUD.clienteForm(document.getElementById('view'));
+      if (v === 'usuarios') {
+        const isRoot = this.role === 'root';
+        return await USERS.openCreate(document.getElementById('view'), isRoot);
+      }
       this.go('transacoes'); await new Promise(r => setTimeout(r, 60));
       await CRUD.txForm(document.getElementById('view'));
     } catch (err) {
@@ -109,7 +114,8 @@ const App = {
     const names = {
       dashboard: 'Dashboard', fluxo: 'Fluxo de Caixa', transacoes: 'Transações',
       contas: 'Contas a Pagar / Receber', clientes: 'Clientes',
-      relatorios: 'Relatórios & BI', config: 'Configurações'
+      relatorios: 'Relatórios & BI', config: 'Configurações',
+      usuarios: 'Usuários'
     };
     document.getElementById('topbar-title').textContent = names[view] || 'C2 Finance';
     document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
@@ -128,7 +134,8 @@ const App = {
         contas: CRUD.contas.bind(CRUD),
         clientes: CRUD.clientes.bind(CRUD),
         relatorios: REPORTS.render.bind(REPORTS),
-        config: CRUD.config.bind(CRUD)
+        config: CRUD.config.bind(CRUD),
+        usuarios: USERS.render.bind(USERS)
       };
       await map[view](root);
       mountIcons(root);
@@ -143,12 +150,21 @@ const App = {
     if (!data.session) return this.showAuth();
     this.user = data.session.user;
     this.showApp();
-    const valid = { dashboard: 1, fluxo: 1, transacoes: 1, contas: 1, clientes: 1, relatorios: 1, config: 1 };
+    const valid = { dashboard: 1, fluxo: 1, transacoes: 1, contas: 1, clientes: 1, relatorios: 1, config: 1, usuarios: 1 };
     const fromHash = location.hash.replace('#/', '');
     if (valid[fromHash]) this.view = fromHash;
     await this.restoreOrg();
+    this.role = await myRole().catch(() => 'member');
+    this.applyRoleUI();
     await this.go(this.view);
     this.loadDrawerMeta();
+  },
+
+  // Mostra/oculta itens exclusivos de administradores (Root/Master)
+  applyRoleUI() {
+    const admin = this.role === 'root' || this.role === 'master';
+    document.querySelectorAll('.admin-only').forEach(n => n.classList.toggle('hidden', !admin));
+    if (!admin && this.view === 'usuarios') { this.view = 'dashboard'; location.hash = '#/dashboard'; }
   },
 
   showAuth() {
@@ -171,13 +187,27 @@ const App = {
       if (orgId && orgs.some(o => o.id === orgId)) { this.orgId = orgId; }
       else if (orgs.length) { this.orgId = orgs[0].id; try { localStorage.setItem(SESSION_LABEL, this.orgId); } catch(e){} }
       else {
-        // sem organização: cria a primeira baseada no perfil
-        const name = this.user?.user_metadata?.name ? `${this.user.user_metadata.name}'s Org` : 'Minha Organização';
-        try {
-          this.orgId = await createOrganization({ name });
-          try { localStorage.setItem(SESSION_LABEL, this.orgId); } catch(e){}
-          toast('Organização inicial criada. Bem-vindo ao C2 Finance!');
-        } catch(e) { offerSetup(document.getElementById('view'), e); }
+        // sem organização: garante o papel (bootstrap do primeiro acesso)
+        this.role = await myRole();
+        const hasRoot = await rootExists().catch(() => false);
+        if (this.role !== 'root' && !hasRoot) {
+          // primeiro humano a usar o sistema assume o papel de administrador principal
+          try { await ensureRoot(this.user?.email || ''); this.role = 'root'; } catch(e) {}
+        }
+        if (this.role === 'root' || !hasRoot) {
+          // root criando a própria organização inicial
+          const name = this.user?.user_metadata?.name ? `${this.user.user_metadata.name}'s Org` : 'Minha Organização';
+          try {
+            this.orgId = await createOrganization({ name });
+            try { localStorage.setItem(SESSION_LABEL, this.orgId); } catch(e){}
+            toast('Organização inicial criada. Bem-vindo ao C2 Finance!');
+          } catch(e) { offerSetup(document.getElementById('view'), e); }
+        } else {
+          // membro aguardando vínculo a uma organização
+          this.orgId = null;
+          this.view = 'config';
+          toast('Você ainda não foi vinculado a nenhuma organização.', 'info');
+        }
       }
       this.loadDrawerMeta();
     } catch (e) {
@@ -207,6 +237,8 @@ const App = {
   },
 
   async refresh() {
+    this.role = await myRole().catch(() => 'member');
+    this.applyRoleUI();
     this.loadDrawerMeta();
     await this.go(this.view);
   }

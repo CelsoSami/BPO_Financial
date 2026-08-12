@@ -128,6 +128,54 @@ const listMembers = async (orgId) => {
   return data || [];
 };
 
+// ---------------- Gestão de usuários (Root / Master) ----------------
+const myRole = async () => {
+  try { return await rpc('my_role'); } catch (e) { return 'member'; }
+};
+
+const rootExists = async () => {
+  try { return !!await rpc('root_exists'); } catch (e) { return false; }
+};
+
+const ensureRoot = async (email) =>
+  rpc('ensure_root', { _email: email });
+
+const promoteMaster = async ({ org, user }) =>
+  rpc('promote_master', { _org: org, _user: user });
+
+const demoteMaster = async (user) =>
+  rpc('demote_master', { _user: user });
+
+const addUserToOrg = async ({ org, user, role = 'member' }) =>
+  rpc('add_user_to_org', { _org: org, _user: user, _role: role });
+
+const removeUserFromOrg = async ({ org, user }) =>
+  rpc('remove_user_from_org', { _org: org, _user: user });
+
+// Cria uma conta de usuário sem trocar a sessão atual do administrador.
+// Retorna o usuário criado (auth.users).
+const adminCreateUser = async ({ email, password, name }) => {
+  const prev = (await getSession()).data?.session || null;
+  const { data, error } = await sb.auth.signUp({
+    email, password, options: { data: { name } }
+  });
+  if (error) throw error;
+  if (!data || !data.user) throw new Error('Não foi possível criar o usuário.');
+  // Se o signUp trocar a sessão para o novo usuário, restaura a do admin
+  const cur = (await getSession()).data?.session;
+  if (prev && cur && cur.user?.id !== prev.user?.id) {
+    try {
+      await sb.auth.setSession({ access_token: prev.access_token, refresh_token: prev.refresh_token });
+    } catch (e) { /* sessão obtida ao recarregar */ }
+  }
+  return {
+    id: data.user.id,
+    email: data.user.email,
+    // false quando o e-mail precisa ser confirmado antes do 1º login
+    confirmed: !!(data.user.email_confirmed_at || data.session)
+  };
+};
+
 // ---------------- Índice global (verificação de setup) ----------------
 const checkSchema = async () => {
   try {

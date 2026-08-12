@@ -723,15 +723,29 @@ CRUD.config = async (root) => {
   clear(root);
   const user = (await sb.auth.getSession()).data.session?.user;
   const profile = user ? (await dbSelect('profiles', { filters: { id: user.id } }))[0] : null;
+  const role = await myRole().catch(() => 'member');
+  const hasRoot = await rootExists().catch(() => true);
+  const isRootRole = role === 'root' || (profile && profile.role === 'root');
+
+  // Bootstrap: usuário sem papel que ainda não tem root no sistema
+  const needBootstrap = !isRootRole && !hasRoot;
 
   root.appendChild(els(`
     <div class="view-header"><h1>Configurações</h1><p>Perfil, equipe e organização</p></div>
+    ${needBootstrap ? `
+    <div class="card usr-actions">
+      <div class="card-title">${icon('shield',15)} Primeiro acesso</div>
+      <p class="muted" style="margin-top:8px">Você é o primeiro usuário do sistema e ainda não há um administrador principal (Root). Ao assumir este papel, você poderá criar usuários master, organizações e gerenciar todas as equipes.</p>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn primary" id="cf-boot-root">${icon('shield',16)} Assumir como administrador principal</button>
+      </div>
+    </div>` : ''}
     <div class="card">
       <div class="card-title">Minha Conta</div>
       <div class="row" style="margin-top:10px">
         <div class="ico">${esc(initials(profile?.name || user?.email))}</div>
         <div class="body"><strong>${esc(profile?.name || user?.email)}</strong><span>${esc(user?.email)}</span></div>
-        <div class="right"><span class="chip info">${esc(profile?.title || 'Administrador')}</span></div>
+        <div class="right"><span class="chip role-${role}">${roleLabel(role)}</span></div>
       </div>
     </div>
     <div class="card">
@@ -754,6 +768,17 @@ CRUD.config = async (root) => {
       <p class="muted" style="font-size:12px;margin-top:12px">Multi-tenant: cada usuário acessa apenas os dados das organizações em que é membro (Row Level Security).</p>
     </div>
   `));
+
+  if (needBootstrap) {
+    root.querySelector('#cf-boot-root').addEventListener('click', async () => {
+      try {
+        await ensureRoot(user?.email || '');
+        App.role = 'root';
+        toast('Agora você é o administrador principal (Root)!');
+        App.refresh();
+      } catch (e) { toast(msgOf(e), 'err'); }
+    });
+  }
 
   const orgsBox = root.querySelector('#cfg-orgs');
   try {
@@ -790,7 +815,7 @@ CRUD.config = async (root) => {
   } catch (e) { orgsBox.appendChild(el(`<div class="muted" style="padding:10px 0;font-size:13px">${esc(msgOf(e))}</div>`)); }
 
   const addOrgBtn = el(`<button class="btn ghost block" id="cfg-add-org" style="margin-top:10px">${icon('plus',16)} Nova organização</button>`);
-  orgsBox.appendChild(addOrgBtn);
+  if (isRootRole) orgsBox.appendChild(addOrgBtn);
   addOrgBtn.addEventListener('click', () => {
     openModal('Nova Organização', `
       <label class="field"><span>Nome</span><input id="org-name" placeholder="Ex.: Cliente Alfa LTDA"></label>
