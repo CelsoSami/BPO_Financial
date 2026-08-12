@@ -90,12 +90,18 @@ const App = {
     });
   },
 
-  fabAction() {
-    const v = this.view;
-    if (v === 'transacoes') return CRUD.txForm(document.getElementById('view'));
-    if (v === 'contas') return CRUD.invForm(document.getElementById('view'));
-    if (v === 'clientes') return CRUD.clienteForm(document.getElementById('view'));
-    this.go('transacoes'); setTimeout(() => CRUD.txForm(document.getElementById('view')), 60);
+  async fabAction() {
+    try {
+      const v = this.view;
+      if (v === 'transacoes') return await CRUD.txForm(document.getElementById('view'));
+      if (v === 'contas') return await CRUD.invForm(document.getElementById('view'));
+      if (v === 'clientes') return await CRUD.clienteForm(document.getElementById('view'));
+      this.go('transacoes'); await new Promise(r => setTimeout(r, 60));
+      await CRUD.txForm(document.getElementById('view'));
+    } catch (err) {
+      console.error('FAB:', err);
+      toast('Não foi possível abrir o formulário.', 'err');
+    }
   },
 
   async go(view, opts = {}) {

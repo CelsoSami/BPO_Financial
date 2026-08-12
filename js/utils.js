@@ -128,7 +128,9 @@ const ICONS = {
   search: '<circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/>',
   shield: '<path d="M12 2l8 3v6c0 5-3.4 9-8 11-4.6-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/>',
   arrow_up: '<path d="M12 19V5M5 12l7-7 7 7"/>',
-  arrow_down: '<path d="M12 5v14M5 12l7 7 7-7"/>'
+  arrow_down: '<path d="M12 5v14M5 12l7 7 7-7"/>',
+  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>',
+  moon: '<path d="M20 14.1A8.6 8.6 0 1 1 9.9 4a7 7 0 0 0 10.1 10.1z"/>'
 };
 
 const icon = (name, size = 20) =>
