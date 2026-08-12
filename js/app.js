@@ -1,0 +1,211 @@
+// ============================================================
+// C2 Finance - Núcleo da aplicação
+// Boot, sessão, roteamento, drawer lateral, org ativa
+// ============================================================
+
+const App = {
+  view: 'dashboard',
+  orgId: null,
+  user: null,
+  _orgName: '—',
+
+  init() {
+    this.bindAuth();
+    this.bindShell();
+    this.boot();
+  },
+
+  // ---------- Auth UI ----------
+  bindAuth() {
+    document.getElementById('auth-tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab'); if (!tab) return;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const isLogin = tab.dataset.tab === 'login';
+      document.getElementById('login-form').classList.toggle('hidden', !isLogin);
+      document.getElementById('signup-form').classList.toggle('hidden', isLogin);
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const box = document.getElementById('login-msg');
+      box.className = 'msg'; box.textContent = 'Entrando...';
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const { error } = await signIn({ email, password });
+      if (error) {
+        box.className = 'msg err';
+        box.textContent = msgOf(error);
+      } else { box.textContent = ''; await this.boot(); }
+    });
+
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const box = document.getElementById('signup-msg');
+      box.className = 'msg'; box.textContent = 'Criando conta...';
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const { data, error } = await signUp({ email, password, name });
+      if (error) {
+        box.className = 'msg err';
+        box.textContent = msgOf(error);
+        return;
+      }
+      if (data && data.session) {
+        box.className = 'msg ok'; box.textContent = 'Conta criada!';
+        await this.boot();
+      } else {
+        box.className = 'msg ok';
+        box.textContent = 'Conta criada! Confirme o e-mail para entrar.';
+      }
+    });
+  },
+
+  // ---------- App shell / navegação ----------
+  bindShell() {
+    const drawer = document.getElementById('drawer');
+    document.getElementById('btn-drawer').addEventListener('click', () => drawer.classList.toggle('open'));
+    document.getElementById('drawer-scrim').addEventListener('click', () => drawer.classList.remove('open'));
+
+    document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+
+    document.querySelectorAll('.nav-item, .tabbar-item[data-view]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.go(btn.dataset.view);
+        drawer.classList.remove('open');
+      });
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await signOut();
+      this.showAuth();
+    });
+
+    document.getElementById('fab').addEventListener('click', () => this.fabAction());
+
+    window.addEventListener('hashchange', () => {
+      const hash = location.hash.replace('#/', '');
+      if (hash) this.go(hash);
+    });
+  },
+
+  fabAction() {
+    const v = this.view;
+    if (v === 'transacoes') return CRUD.txForm(document.getElementById('view'));
+    if (v === 'contas') return CRUD.invForm(document.getElementById('view'));
+    if (v === 'clientes') return CRUD.clienteForm(document.getElementById('view'));
+    this.go('transacoes'); setTimeout(() => CRUD.txForm(document.getElementById('view')), 60);
+  },
+
+  async go(view, opts = {}) {
+    this.view = view;
+    const names = {
+      dashboard: 'Dashboard', fluxo: 'Fluxo de Caixa', transacoes: 'Transações',
+      contas: 'Contas a Pagar / Receber', clientes: 'Clientes',
+      relatorios: 'Relatórios & BI', config: 'Configurações'
+    };
+    document.getElementById('topbar-title').textContent = names[view] || 'C2 Finance';
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+    document.querySelectorAll('.tabbar-item[data-view]').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+    if (location.hash !== '#/' + view) history.replaceState(null, '', '#/' + view);
+
+    const root = document.getElementById('view');
+    clear(root);
+    root.appendChild(el(`<div class="view-header"><h1>${names[view]}</h1></div><div class="skel" style="min-height:200px"></div>`));
+
+    try {
+      const map = {
+        dashboard: CRUD.dashboard.bind(CRUD),
+        fluxo: CRUD.fluxo.bind(CRUD),
+        transacoes: CRUD.transacoes.bind(CRUD),
+        contas: CRUD.contas.bind(CRUD),
+        clientes: CRUD.clientes.bind(CRUD),
+        relatorios: REPORTS.render.bind(REPORTS),
+        config: CRUD.config.bind(CRUD)
+      };
+      await map[view](root);
+      mountIcons(root);
+    } catch (e) {
+      offerSetup(root, e);
+    }
+  },
+
+  // ---------- Sessão & boot ----------
+  async boot() {
+    const { data } = await getSession();
+    if (!data.session) return this.showAuth();
+    this.user = data.session.user;
+    this.showApp();
+    await this.restoreOrg();
+    await this.go(this.view);
+    this.loadDrawerMeta();
+  },
+
+  showAuth() {
+    clear(document.getElementById('view'));
+    document.getElementById('auth-view').classList.remove('hidden');
+    document.getElementById('app-view').classList.add('hidden');
+  },
+
+  showApp() {
+    document.getElementById('auth-view').classList.add('hidden');
+    document.getElementById('app-view').classList.remove('hidden');
+  },
+
+  async restoreOrg() {
+    // org salva localmente; se não existir, escolhe a primeira do usuário
+    let orgId = null;
+    try { orgId = localStorage.getItem(SESSION_LABEL); } catch(e) {}
+    try {
+      const orgs = await listMyOrgs();
+      if (orgId && orgs.some(o => o.id === orgId)) { this.orgId = orgId; }
+      else if (orgs.length) { this.orgId = orgs[0].id; try { localStorage.setItem(SESSION_LABEL, this.orgId); } catch(e){} }
+      else {
+        // sem organização: cria a primeira baseada no perfil
+        const name = this.user?.user_metadata?.name ? `${this.user.user_metadata.name}'s Org` : 'Minha Organização';
+        try {
+          this.orgId = await createOrganization({ name });
+          try { localStorage.setItem(SESSION_LABEL, this.orgId); } catch(e){}
+          toast('Organização inicial criada. Bem-vindo ao C2 Finance!');
+        } catch(e) { offerSetup(document.getElementById('view'), e); }
+      }
+      this.loadDrawerMeta();
+    } catch (e) {
+      offerSetup(document.getElementById('view'), e);
+    }
+  },
+
+  getOrg() { return this.orgId; },
+
+  setOrg(id) {
+    this.orgId = id;
+    try { localStorage.setItem(SESSION_LABEL, id); } catch(e){}
+  },
+
+  updateOrgName(org) {
+    if (org) this._orgName = org.name;
+  },
+
+  async loadDrawerMeta() {
+    if (!this.orgId) return;
+    try {
+      const orgs = await listMyOrgs();
+      const active = orgs.find(o => o.id === this.orgId);
+      if (active) this._orgName = active.name;
+    } catch(e){}
+    document.getElementById('org-name-drawer').textContent = this._orgName;
+  },
+
+  async refresh() {
+    this.loadDrawerMeta();
+    await this.go(this.view);
+  }
+};
+
+// ---------- Ripple em todos os botões ----------
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.btn').forEach(ripple);
+  mountIcons(document.body);
+  App.init();
+});

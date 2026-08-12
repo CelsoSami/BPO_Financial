@@ -1,0 +1,3 @@
+# Ferramentas Python do C2 Finance
+# Todos os scripts usam apenas a biblioteca padrão (urllib/ssl/random/json).
+# Nenhuma dependência externa é necessária.
