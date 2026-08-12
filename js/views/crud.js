@@ -9,12 +9,19 @@ const CRUD = {};
 
 const offerSetup = (root, err) => {
   clear(root);
+  const isSchema = isSetupError(err);
+  const detail = isSchema ? '' : `<p class="muted" style="max-width:420px;margin:0 auto 18px;font-size:12.5px">Erro: ${esc(msgOf(err))}</p>`;
+  const btn = isSchema
+    ? `<button class="btn primary" onclick="location.reload()">${icon('check',18)} Já configurei — verificar</button>`
+    : `<button class="btn ghost" onclick="location.reload()">${icon('refresh',18)} Recarregar</button>`;
   root.appendChild(el(`
     <div class="card" style="text-align:center;padding:34px 20px">
-      <div style="font-size:40px;margin-bottom:10px">${icon('shield', 38)}</div>
-      <h2 style="margin-bottom:8px">Banco de dados precisa de configuração</h2>
-      <p class="muted" style="max-width:420px;margin:0 auto 18px">Para o C2 Finance funcionar com segurança multi-tenant, execute o arquivo <code style="font-size:12px">supabase/schema.sql</code> no Supabase → SQL Editor. Depois volte aqui.</p>
-      <button class="btn primary" onclick="location.reload()">${icon('check',18)} Já configurei — verificar</button>
+      <div style="font-size:40px;margin-bottom:10px">${icon(isSchema ? 'shield' : 'alert', 38)}</div>
+      <h2 style="margin-bottom:8px">${isSchema ? 'Banco de dados precisa de configuração' : 'Algo deu errado'}</h2>
+      ${isSchema
+        ? '<p class="muted" style="max-width:420px;margin:0 auto 18px">Para o C2 Finance funcionar com segurança multi-tenant, execute o arquivo <code style="font-size:12px">supabase/schema.sql</code> no Supabase → SQL Editor. Depois volte aqui.</p>'
+        : detail}
+      ${btn}
     </div>
   `));
   mountIcons(root);
@@ -355,7 +362,7 @@ CRUD.txForm = async (root, editId) => {
     </div>
   `);
 
-  const seg = root.querySelector('#tx-kind-seg');
+  const seg = document.getElementById('tx-kind-seg');
   const catSel = document.getElementById('tx-cat');
   seg.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
@@ -756,11 +763,29 @@ CRUD.config = async (root) => {
       <div class="org-chip" data-org="${o.id}" style="margin-top:8px">
         <span class="dot"></span>
         <div style="flex:1"><strong>${esc(o.name)}</strong><span>${esc(o.segment || 'Organização')}${o.id===App.getOrg()?' · ativa':''}</span></div>
-        ${o.id===App.getOrg()?'<span class="chip ok">Ativa</span>':'<button class="btn ghost sm" data-switch="'+o.id+'">Usar</button>'}
+        ${o.id===App.getOrg()
+          ? '<span class="chip ok">Ativa</span>'
+          : '<span style="display:flex;gap:6px"><button class="btn ghost sm" data-switch="'+o.id+'">Usar</button><button class="icon-btn danger" data-del="'+o.id+'" aria-label="Remover">'+icon('trash',15)+'</button></span>'}
       </div>
     `)));
     orgsBox.querySelectorAll('[data-switch]').forEach(b => b.addEventListener('click', () => {
       App.setOrg(b.dataset.switch); App.refresh(); toast('Organização alterada.');
+    }));
+    orgsBox.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const id = b.dataset.del;
+      openModal('Remover organização', `
+        <p class="muted">Excluir esta organização e todos os seus dados? Esta ação não pode ser desfeita.</p>
+        <div class="actions"><button class="btn ghost" id="md-cancel">Cancelar</button><button class="btn danger" id="md-del-org">${icon('trash',16)} Excluir</button></div>`);
+      document.getElementById('md-cancel').addEventListener('click', closeModal);
+      document.getElementById('md-del-org').addEventListener('click', async () => {
+        try {
+          await deleteOrganization(id);
+          toast('Organização removida.'); closeModal();
+          if (App.getOrg() === id) { App.setOrg(null); try { localStorage.removeItem(SESSION_LABEL); } catch(e){} App.orgId = null; }
+          CRUD.config(root);
+        } catch (e) { toast(msgOf(e), 'err'); }
+      });
     }));
   } catch (e) { orgsBox.appendChild(el(`<div class="muted" style="padding:10px 0;font-size:13px">${esc(msgOf(e))}</div>`)); }
 

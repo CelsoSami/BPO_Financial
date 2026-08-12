@@ -107,6 +107,11 @@ const inviteMember = async ({ org, email, role }) =>
 const removeMember = async ({ org, user }) =>
   rpc('remove_member', { _org: org, _user: user });
 
+const deleteOrganization = async (id) => {
+  const { error } = await sb.from('organizations').delete().eq('id', id);
+  if (error) throw error;
+};
+
 const listMyOrgs = async () => {
   const { data, error } = await sb.from('organizations')
     .select('*')
