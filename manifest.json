@@ -2,7 +2,7 @@
   "name": "C2 Finance - BPO Financeiro",
   "short_name": "C2 Finance",
   "description": "Gestão e análise financeira multi-tenant para BPO Financeiro.",
-  "start_url": "./index.html",
+  "start_url": "./app.html",
   "display": "standalone",
   "background_color": "#2a2160",
   "theme_color": "#2a2160",
