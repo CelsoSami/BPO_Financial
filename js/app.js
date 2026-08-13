@@ -18,15 +18,6 @@ const App = {
 
   // ---------- Auth UI ----------
   bindAuth() {
-    document.getElementById('auth-tabs').addEventListener('click', (e) => {
-      const tab = e.target.closest('.tab'); if (!tab) return;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      const isLogin = tab.dataset.tab === 'login';
-      document.getElementById('login-form').classList.toggle('hidden', !isLogin);
-      document.getElementById('signup-form').classList.toggle('hidden', isLogin);
-    });
-
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const box = document.getElementById('login-msg');
@@ -38,28 +29,6 @@ const App = {
         box.className = 'msg err';
         box.textContent = msgOf(error);
       } else { box.textContent = ''; await this.boot(); }
-    });
-
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const box = document.getElementById('signup-msg');
-      box.className = 'msg'; box.textContent = 'Criando conta...';
-      const name = document.getElementById('signup-name').value.trim();
-      const email = document.getElementById('signup-email').value.trim();
-      const password = document.getElementById('signup-password').value;
-      const { data, error } = await signUp({ email, password, name });
-      if (error) {
-        box.className = 'msg err';
-        box.textContent = msgOf(error);
-        return;
-      }
-      if (data && data.session) {
-        box.className = 'msg ok'; box.textContent = 'Conta criada!';
-        await this.boot();
-      } else {
-        box.className = 'msg ok';
-        box.textContent = 'Conta criada! Confirme o e-mail para entrar.';
-      }
     });
   },
 

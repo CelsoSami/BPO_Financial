@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C2 Finance — BPO Financeiro Inteligente</title>
+<meta name="description" content="C2 Finance é a plataforma de BPO financeiro que organiza, analisa e visualiza os dados financeiros de múltiplas organizações em um só lugar.">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14141f; --bg-a:#1e1e30; --bg-b:#282a36; --bg-c:#4b2d8f;
+  --accent:#bd93f9; --accent-2:#ff79c6; --ok:#50fa7b; --cyan:#8be9fd;
+  --text:#f8f8f2; --dim:#e0def4; --muted:#9a93c4;
+  --card:rgba(255,255,255,.045); --stroke:rgba(189,147,249,.16);
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.22,.9,.28,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  line-height:1.6;overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+::selection{background:rgba(189,147,249,.35)}
+
+/* ---------- fundo animado ---------- */
+.sky{position:fixed;inset:0;z-index:-3;background:linear-gradient(152deg,var(--bg-a) 0%,var(--bg-b) 48%,var(--bg-c) 100%)}
+#particles{position:fixed;inset:0;z-index:-2;opacity:.5}
+#aurora{position:fixed;inset:0;z-index:-2;overflow:hidden}
+#aurora span{
+  position:absolute;border-radius:50%;filter:blur(70px);opacity:.22;
+  animation:drift 22s ease-in-out infinite;
+}
+#aurora span:nth-child(1){width:46vw;height:46vw;left:-12vw;top:-14vh;background:radial-gradient(circle,#8b5cf6,transparent 70%)}
+#aurora span:nth-child(2){width:38vw;height:38vw;right:-10vw;top:18vh;background:radial-gradient(circle,#bd93f9,transparent 70%);animation-delay:-7s}
+#aurora span:nth-child(3){width:42vw;height:42vw;left:26vw;bottom:-24vh;background:radial-gradient(circle,#ff79c6,transparent 70%);animation-delay:-13s}
+@keyframes drift{
+  0%,100%{transform:translate3d(0,0,0) scale(1)}
+  33%{transform:translate3d(6vw,-4vh,0) scale(1.12)}
+  66%{transform:translate3d(-5vw,5vh,0) scale(.94)}
+}
+
+/* ---------- nav ---------- */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px clamp(18px,5vw,48px);
+  transition:background .5s var(--ease), box-shadow .5s var(--ease), padding .5s var(--ease);
+}
+nav.scrolled{
+  background:rgba(20,20,31,.72);backdrop-filter:blur(18px) saturate(1.4);
+  box-shadow:0 10px 40px -20px rgba(0,0,0,.6);padding-top:11px;padding-bottom:11px;
+}
+.brand{display:flex;align-items:center;gap:11px}
+.brand-mark{
+  width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
+  font-weight:900;font-size:17px;color:#fff;letter-spacing:.5px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  box-shadow:0 10px 24px -10px rgba(189,147,249,.7);
+}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-text strong{font-size:17px;font-weight:800;letter-spacing:.3px}
+.brand-text span{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.6px;text-transform:uppercase}
+.nav-links{display:flex;align-items:center;gap:30px;list-style:none}
+.nav-links a{font-size:14.5px;font-weight:600;color:var(--dim);position:relative;transition:color .3s}
+.nav-links a::after{
+  content:"";position:absolute;left:0;bottom:-5px;height:2px;width:0;border-radius:2px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .35s var(--ease);
+}
+.nav-links a:hover{color:#fff}
+.nav-links a:hover::after{width:100%}
+.signin{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:12px 22px;border-radius:13px;font-weight:700;font-size:14.5px;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  box-shadow:0 12px 30px -12px rgba(189,147,249,.8);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s;
+}
+.signin:hover{transform:translateY(-2px);box-shadow:0 18px 40px -12px rgba(189,147,249,.9)}
+.signin:active{transform:scale(.96)}
+.signin svg{width:17px;height:17px}
+.burger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--stroke);background:var(--card);place-items:center}
+.burger span{display:block;width:18px;height:2px;background:var(--text);margin:3px 0;border-radius:2px;transition:.35s var(--ease)}
+
+/* ---------- hero ---------- */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  padding:120px clamp(20px,6vw,60px) 60px;position:relative;
+}
+.hero-inner{display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center;max-width:1200px;width:100%;margin:0 auto}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 15px;border-radius:999px;
+  font-size:12.5px;font-weight:700;letter-spacing:.4px;color:var(--accent);
+  background:rgba(189,147,249,.1);border:1px solid rgba(189,147,249,.28);
+  animation:fadeUp .8s var(--ease) both;
+}
+.badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(80,250,123,.6);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(80,250,123,.55)}70%{box-shadow:0 0 0 10px rgba(80,250,123,0)}100%{box-shadow:0 0 0 0 rgba(80,250,123,0)}}
+h1{
+  font-size:clamp(34px,6vw,64px);font-weight:900;line-height:1.06;letter-spacing:-1px;
+  margin:22px 0 0;animation:fadeUp .8s .08s var(--ease) both;
+}
+.grad{
+  background:linear-gradient(92deg,var(--accent) 0%,var(--accent-2) 55%,#ffb86c 100%);
+  background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shine 6s linear infinite;
+}
+@keyframes shine{to{background-position:200% center}}
+.hero p.lead{
+  margin:22px 0 30px;font-size:clamp(16px,2.2vw,19.5px);color:var(--muted);
+  max-width:540px;animation:fadeUp .8s .16s var(--ease) both;
+}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;animation:fadeUp .8s .24s var(--ease) both}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;padding:16px 28px;border-radius:14px;
+  font-weight:700;font-size:15px;transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s,background .3s;
+}
+.btn.primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 16px 40px -14px rgba(189,147,249,.9)}
+.btn.primary:hover{transform:translateY(-3px)}
+.btn.ghost{color:var(--dim);background:var(--card);border:1px solid var(--stroke);backdrop-filter:blur(10px)}
+.btn.ghost:hover{background:rgba(255,255,255,.09);transform:translateY(-3px)}
+.hero-meta{margin-top:26px;display:flex;gap:26px;flex-wrap:wrap;animation:fadeUp .8s .32s var(--ease) both}
+.hero-meta div{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);font-weight:600}
+.hero-meta svg{width:16px;height:16px;color:var(--ok)}
+
+/* ---------- mockup ---------- */
+.mockup-wrap{position:relative;animation:floatY 7s ease-in-out infinite;animation-delay:.3s}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+.mockup{
+  background:rgba(255,255,255,.06);border:1px solid var(--stroke);border-radius:22px;
+  backdrop-filter:blur(24px) saturate(1.4);box-shadow:0 40px 90px -40px rgba(0,0,0,.8);
+  overflow:hidden;padding:18px;animation:fadeUp 1s .3s var(--ease) both;
+}
+.mock-title{display:flex;align-items:center;gap:8px;padding:2px 2px 14px}
+.mock-title i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.mock-title i:nth-child(1){background:#ff5f57}.mock-title i:nth-child(2){background:#febc2e}.mock-title i:nth-child(3){background:#28c840}
+.mock-title span{flex:1;text-align:center;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.mock-body{display:grid;grid-template-columns:64px 1fr;gap:14px}
+.mock-side{display:flex;flex-direction:column;gap:9px}
+.mock-side i{height:8px;border-radius:4px;background:rgba(255,255,255,.14)}
+.mock-side i:first-child{background:linear-gradient(90deg,var(--accent),var(--accent-2));width:80%}
+.mock-main{display:flex;flex-direction:column;gap:10px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:rgba(255,255,255,.05);border:1px solid var(--stroke);border-radius:13px;padding:11px}
+.kpi span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.kpi strong{font-family:var(--mono);font-size:15px;display:block;margin-top:4px}
+.kpi.up strong{color:var(--ok)}.kpi.down strong{color:#ff6b6b}
+.bars{background:rgba(255,255,255,.05);border:1px solid var(--stroke);border-radius:13px;padding:12px;display:flex;align-items:flex-end;gap:6px;height:110px}
+.bars b{flex:1;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--accent),rgba(189,147,249,.15));animation:barGrow 1.2s cubic-bezier(.22,.9,.28,1) both}
+.bars b:nth-child(2n){background:linear-gradient(180deg,var(--accent-2),rgba(255,121,198,.15))}
+@keyframes barGrow{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1)}}
+.mock-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mock-row .cell{background:rgba(255,255,255,.05);border:1px solid var(--stroke);border-radius:11px;padding:9px;display:flex;gap:8px;align-items:center}
+.mock-row .cell i{width:22px;height:22px;border-radius:7px;background:rgba(189,147,249,.25);flex:none}
+.mock-row .cell b{height:7px;border-radius:4px;background:rgba(255,255,255,.18);display:block}
+.mock-row .cell b:last-child{width:55%;background:rgba(255,255,255,.1)}
+.float-chip{
+  position:absolute;background:rgba(30,30,48,.92);border:1px solid var(--stroke);
+  border-radius:14px;padding:11px 15px;display:flex;align-items:center;gap:10px;
+  box-shadow:0 20px 50px -20px rgba(0,0,0,.7);animation:floatY 6s ease-in-out infinite;
+}
+.float-chip.top{top:-26px;right:-8px}
+.float-chip.bot{bottom:-22px;left:-14px;animation-delay:-3s}
+.float-chip .dot{width:10px;height:10px;border-radius:50%}
+.float-chip.top .dot{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+.float-chip.bot .dot{background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.float-chip b{display:block;font-size:12.5px}
+.float-chip span{font-size:10.5px;color:var(--muted)}
+
+/* ---------- seções ---------- */
+section{padding:100px clamp(20px,6vw,60px)}
+.wrap{max-width:1160px;margin:0 auto}
+.sec-head{text-align:center;max-width:660px;margin:0 auto 60px}
+.sec-tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.sec-head h2{font-size:clamp(28px,4.4vw,44px);font-weight:900;letter-spacing:-.5px;line-height:1.1}
+.sec-head p{margin-top:16px;color:var(--muted);font-size:16.5px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.stat{text-align:center;padding:30px 16px;background:var(--card);border:1px solid var(--stroke);border-radius:18px;transition:transform .4s var(--ease),border-color .3s}
+.stat:hover{transform:translateY(-6px);border-color:rgba(189,147,249,.4)}
+.stat b{font-family:var(--mono);font-size:clamp(30px,4.4vw,44px);font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat span{display:block;margin-top:8px;font-size:13.5px;color:var(--muted);font-weight:600}
+
+/* cards de recursos */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.card{
+  padding:28px;background:var(--card);border:1px solid var(--stroke);border-radius:20px;
+  transition:transform .5s var(--ease),border-color .35s,background .35s;position:relative;overflow:hidden;
+}
+.card::before{content:"";position:absolute;inset:0;background:radial-gradient(140% 90% at 50% -20%,rgba(189,147,249,.14),transparent 55%);opacity:0;transition:opacity .5s}
+.card:hover{transform:translateY(-8px);border-color:rgba(189,147,249,.42);background:rgba(255,255,255,.07)}
+.card:hover::before{opacity:1}
+.card .ic{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;margin-bottom:18px;background:rgba(189,147,249,.14);border:1px solid rgba(189,147,249,.28)}
+.card .ic svg{width:24px;height:24px;color:var(--accent)}
+.card h3{font-size:18.5px;font-weight:800;margin-bottom:9px}
+.card p{font-size:14.5px;color:var(--muted)}
+
+/* papéis / hierarquia */
+.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.role{
+  text-align:center;padding:32px 18px;border-radius:20px;border:1px solid var(--stroke);
+  background:var(--card);position:relative;transition:transform .45s var(--ease),border-color .3s;
+}
+.role:hover{transform:translateY(-6px) scale(1.02)}
+.role .avatar{
+  width:66px;height:66px;margin:0 auto 16px;border-radius:20px;display:grid;place-items:center;
+  font-weight:900;font-size:22px;color:#fff;
+}
+.role.root .avatar{background:linear-gradient(135deg,#ffd700,#ff8c00);box-shadow:0 14px 30px -12px rgba(255,180,0,.6)}
+.role.m1 .avatar{background:linear-gradient(135deg,var(--accent),#7c5cff);box-shadow:0 14px 30px -12px rgba(189,147,249,.6)}
+.role.m2 .avatar{background:linear-gradient(135deg,#6ee7b7,#3fb98e);box-shadow:0 14px 30px -12px rgba(110,231,183,.5)}
+.role.member .avatar{background:linear-gradient(135deg,#94a3b8,#64748b);box-shadow:0 14px 30px -12px rgba(148,163,184,.5)}
+.role h4{font-size:16.5px;font-weight:800;margin-bottom:8px}
+.role p{font-size:13.5px;color:var(--muted)}
+.role .line{height:3px;width:40px;border-radius:3px;margin:14px auto 0;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+
+/* passos */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;counter-reset:step}
+.step{position:relative;padding:30px;background:var(--card);border:1px solid var(--stroke);border-radius:20px}
+.step::before{
+  counter-increment:step;content:counter(step,decimal-leading-zero);
+  font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);
+  position:absolute;top:22px;right:24px;
+}
+.step .num{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;margin-bottom:16px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:800;font-size:18px}
+.step h3{font-size:17.5px;font-weight:800;margin-bottom:8px}
+.step p{font-size:14px;color:var(--muted)}
+
+/* segurança */
+.sec-grid{display:grid;grid-template-columns:1fr 1fr;gap:46px;align-items:center}
+.sec-badge{display:flex;gap:12px;align-items:center;padding:16px;border-radius:16px;background:var(--card);border:1px solid var(--stroke);margin-top:12px}
+.sec-badge svg{width:22px;height:22px;color:var(--ok);flex:none}
+.sec-badge b{display:block;font-size:14.5px}
+.sec-badge span{font-size:13px;color:var(--muted)}
+.shield-visual{
+  width:230px;height:230px;margin:0 auto;border-radius:50%;position:relative;
+  background:radial-gradient(circle at 34% 28%,rgba(189,147,249,.28),transparent 62%);
+  box-shadow:inset 0 0 0 2px rgba(189,147,249,.4),0 0 90px rgba(189,147,249,.25);
+  animation:floatY 7s ease-in-out infinite;
+}
+.shield-visual .ring{position:absolute;inset:26px;border-radius:50%;border:2px dashed rgba(189,147,249,.45);animation:spin 30s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.shield-visual .core{
+  position:absolute;inset:60px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:900;
+  box-shadow:0 20px 50px -18px rgba(189,147,249,.9);
+}
+
+/* CTA final */
+.cta{
+  text-align:center;padding:90px 24px;border-radius:30px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,rgba(189,147,249,.16),rgba(255,121,198,.1));
+  border:1px solid rgba(189,147,249,.3);
+}
+.cta h2{font-size:clamp(28px,5vw,48px);font-weight:900;letter-spacing:-.5px}
+.cta p{color:var(--muted);max-width:520px;margin:18px auto 34px;font-size:17px}
+.cta::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 0%,rgba(189,147,249,.2),transparent 60%);pointer-events:none}
+
+footer{padding:44px 24px;border-top:1px solid var(--stroke);text-align:center}
+footer .brand{justify-content:center;margin-bottom:12px}
+footer p{font-size:13px;color:var(--muted)}
+
+/* reveal on scroll */
+.reveal{opacity:0;transform:translateY(36px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+
+/* responsivo */
+@media (max-width:920px){
+  .hero-inner{grid-template-columns:1fr;gap:60px}
+  .grid,.steps,.roles{grid-template-columns:repeat(2,1fr)}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .sec-grid{grid-template-columns:1fr}
+  .nav-links{display:none;position:fixed;inset:0;background:rgba(20,20,31,.96);backdrop-filter:blur(20px);flex-direction:column;justify-content:center;gap:34px;font-size:22px}
+  .nav-links.open{display:flex}
+  .nav-links .signin{display:inline-flex}
+  .burger{display:grid}
+}
+@media (max-width:560px){.grid,.steps,.roles{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="sky"></div>
+<div id="aurora"><span></span><span></span><span></span></div>
+<canvas id="particles"></canvas>
+
+<!-- NAV -->
+<nav id="nav">
+  <a class="brand" href="#top">
+    <div class="brand-mark">C2</div>
+    <div class="brand-text"><strong>C2 Finance</strong><span>BPO Financeiro</span></div>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#recursos">Recursos</a></li>
+    <li><a href="#papéis">Equipe</a></li>
+    <li><a href="#como-funciona">Como funciona</a></li>
+    <li><a href="#seguranca">Segurança</a></li>
+    <li><a class="signin" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="M10 8l-4 4 4 4M6 12h9"/></svg>
+      Sign in</a></li>
+  </ul>
+  <button class="burger" id="burger" aria-label="Menu"><div><span></span><span></span><span></span></div></button>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <div>
+      <span class="badge"><span class="pulse"></span> Plataforma de BPO Financeiro</span>
+      <h1>Finanças de todas as suas<br>empresas <span class="grad">em um só painel</span></h1>
+      <p class="lead">O C2 Finance organiza receitas, despesas, contas a pagar e receber, clientes e relatórios de cada organização que você gerencia — com controle de equipe e isolamento total de dados.</p>
+      <div class="hero-cta">
+        <a class="btn primary" href="#recursos">Explorar recursos
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
+        <a class="btn ghost" href="index.html">Acessar painel</a>
+      </div>
+      <div class="hero-meta">
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg> Múltiplas organizações</div>
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.4 9-8 11-4.6-2-8-6-8-11V5z"/></svg> Segurança por organização</div>
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Relatórios &amp; BI</div>
+      </div>
+    </div>
+
+    <div class="mockup-wrap">
+      <div class="mockup">
+        <div class="mock-title"><i></i><i></i><i></i><span>app.c2finance.com</span></div>
+        <div class="mock-body">
+          <div class="mock-side"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="mock-main">
+            <div class="kpis">
+              <div class="kpi up"><span>Saldo</span><strong>R$ 1.284.500</strong></div>
+              <div class="kpi up"><span>Receitas</span><strong>R$ 342.100</strong></div>
+              <div class="kpi down"><span>Despesas</span><strong>R$ 118.720</strong></div>
+            </div>
+            <div class="bars"><b style="height:38%"></b><b style="height:55%"></b><b style="height:42%"></b><b style="height:70%"></b><b style="height:52%"></b><b style="height:86%"></b><b style="height:64%"></b><b style="height:92%"></b><b style="height:74%"></b><b style="height:58%"></b><b style="height:80%"></b><b style="height:68%"></b></div>
+            <div class="mock-row">
+              <div class="cell"><i></i><div style="flex:1"><b style="width:70%"></b><b style="width:45%"></b></div></div>
+              <div class="cell"><i></i><div style="flex:1"><b style="width:62%"></b><b style="width:50%"></b></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="float-chip top"><span class="dot"></span><div><b>+18,4%</b><span>crescimento</span></div></div>
+      <div class="float-chip bot"><span class="dot"></span><div><b>10 empresas</b><span>em um só lugar</span></div></div>
+    </div>
+  </div>
+</header>
+
+<!-- STATS -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat reveal"><b data-count="10" data-suffix="+">0</b><span>Organizações simultâneas</span></div>
+      <div class="stat reveal d1"><b data-count="500" data-suffix="K+">0</b><span>Lançamentos financeiros</span></div>
+      <div class="stat reveal d2"><b data-count="100" data-suffix="%">0</b><span>Isolamento de dados (RLS)</span></div>
+      <div class="stat reveal d3"><b data-count="4" data-suffix="">0</b><span>Níveis de permissão</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- RECURSOS -->
+<section id="recursos">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-tag">Recursos</span>
+      <h2>Tudo o que um escritório de BPO precisa para operar</h2>
+      <p>Uma plataforma completa, pensada para quem gerencia as finanças de várias empresas ao mesmo tempo — com simplicidade e rigor contábil.</p>
+    </div>
+    <div class="grid">
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/><path d="M16 7h4v4"/></svg></div>
+        <h3>Fluxo de Caixa</h3>
+        <p>Acompanhe entradas e saídas em tempo real, com saldo por conta, gráficos e projeção do dia a dia da operação.</p>
+      </div>
+      <div class="card reveal d1">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.4L14 21l-2-1.4L10 21l-2-1.4L6 21z"/><path d="M9 8h6M9 12h6"/></svg></div>
+        <h3>Contas a Pagar e Receber</h3>
+        <p>Faturas, vencimentos, controle de atrasos e baixa de pagamentos — sem deixar nenhum compromisso escapar.</p>
+      </div>
+      <div class="card reveal d2">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 15.5a4.5 4.5 0 0 1 4.5 3.5"/></svg></div>
+        <h3>Clientes e Fornecedores</h3>
+        <p>Cadastro completo de clientes, fornecedores e parceiros, vinculado a cada lançamento e fatura da organização.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16h16"/><path d="M8 16v-5M12 16V8M16 16v-3"/></svg></div>
+        <h3>Relatórios &amp; BI</h3>
+        <p>Dashboards executivos, séries históricas, exportação de CSV e indicadores que contam a saúde de cada empresa.</p>
+      </div>
+      <div class="card reveal d1">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg></div>
+        <h3>Multi-organização</h3>
+        <p>Um painel, muitas empresas. Alterne entre organizações com um clique — cada uma com categorias e dados próprios.</p>
+      </div>
+      <div class="card reveal d2">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.4 9-8 11-4.6-2-8-6-8-11V5z"/></svg></div>
+        <h3>Controle de Equipe</h3>
+        <p>Hierarquia clara de permissões: quem cria, quem gerencia e quem apenas acessa cada organização.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PAPÉIS -->
+<section id="papéis" style="background:rgba(189,147,249,.03);border-top:1px solid var(--stroke);border-bottom:1px solid var(--stroke)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-tag">Equipe &amp; Permissões</span>
+      <h2>Controle total sobre quem faz o quê</h2>
+      <p>Uma hierarquia simples e segura para escritórios que delegam operação sem abrir mão do controle.</p>
+    </div>
+    <div class="roles">
+      <div class="role root reveal"><div class="avatar">R</div><h4>Root</h4><p>Proprietário. Cria organizações e todos os usuários master. Controle absoluto.</p><div class="line"></div></div>
+      <div class="role m1 reveal d1"><div class="avatar">M1</div><h4>Master 1</h4><p>Gerencia uma organização: cria Master 2 e membros vinculados à sua operação.</p><div class="line"></div></div>
+      <div class="role m2 reveal d2"><div class="avatar">M2</div><h4>Master 2</h4><p>Gerencia o dia a dia da equipe, criando e removendo usuários comuns.</p><div class="line"></div></div>
+      <div class="role member reveal d3"><div class="avatar">M</div><h4>Membro</h4><p>Acesso à operação da organização onde foi vinculado. Sem permissões administrativas.</p><div class="line"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section id="como-funciona">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-tag">Como funciona</span>
+      <h2>Operação do jeito certo, em 3 passos</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><div class="num">1</div><h3>Crie sua organização</h3><p>O Root cadastra a empresa do cliente com categorias-padrão prontas, já estruturadas para começar a operar.</p></div>
+      <div class="step reveal d1"><div class="num">2</div><h3>Monte a equipe</h3><p>Vincule Master e membros a cada organização. Cada usuário enxerga somente os dados da sua operação.</p></div>
+      <div class="step reveal d2"><div class="num">3</div><h3>Lance e acompanhe</h3><p>Receitas, despesas, contas e relatórios em um painel único, atualizado em tempo real.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SEGURANÇA -->
+<section id="seguranca" style="background:rgba(189,147,249,.03);border-top:1px solid var(--stroke)">
+  <div class="wrap sec-grid">
+    <div class="reveal">
+      <span class="sec-tag">Segurança</span>
+      <h2 style="font-size:clamp(28px,4.4vw,42px);font-weight:900;letter-spacing:-.5px;line-height:1.1">Seus dados, isolados por organização</h2>
+      <p style="color:var(--muted);margin-top:18px;font-size:16.5px">Cada organização é um ambiente totalmente isolado. As regras de segurança são aplicadas no banco de dados — não apenas na interface — garantindo que ninguém acesse informações de outra empresa.</p>
+      <div class="sec-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg><div><b>Row Level Security (RLS)</b><span>Isolamento aplicado no banco de dados</span></div></div>
+      <div class="sec-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.4 9-8 11-4.6-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg><div><b>Multi-tenant</b><span>Autenticação segura e hierarquia de papéis</span></div></div>
+    </div>
+    <div class="reveal d1" style="display:flex;justify-content:center">
+      <div class="shield-visual"><div class="ring"></div><div class="core">RLS</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section>
+  <div class="wrap">
+    <div class="cta reveal">
+      <h2>Pronto para organizar todas as suas empresas?</h2>
+      <p>Entre no painel e veja como a operação financeira do seu escritório pode ficar simples, segura e profissional.</p>
+      <div class="hero-cta" style="justify-content:center">
+        <a class="btn primary" href="index.html">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="M10 8l-4 4 4 4M6 12h9"/></svg>
+          Sign in
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="brand" style="justify-content:center;margin-bottom:12px">
+    <div class="brand-mark" style="width:36px;height:36px;font-size:14px">C2</div>
+    <div class="brand-text"><strong>C2 Finance</strong><span>BPO Financeiro</span></div>
+  </div>
+  <p>© 2026 C2 Finance · Plataforma de BPO financeiro multi-tenant</p>
+</footer>
+
+<script>
+(function(){
+  // nav scroll
+  var nav=document.getElementById('nav');
+  var onScroll=function(){nav.classList.toggle('scrolled',window.scrollY>30)};
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  // menu mobile
+  var burger=document.getElementById('burger'),links=document.getElementById('navLinks');
+  burger.addEventListener('click',function(){links.classList.toggle('open')});
+  links.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){links.classList.remove('open')})});
+
+  // reveal on scroll
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target)}});
+  },{threshold:.14});
+  document.querySelectorAll('.reveal').forEach(function(n,i){n.style.transitionDelay=(i%3*.08)+'s';io.observe(n)});
+
+  // contadores
+  var cio=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(!en.isIntersecting)return;cio.unobserve(en.target);
+      var el=en.target,target=+el.dataset.count,suffix=el.dataset.suffix||'',t0=performance.now(),dur=1600;
+      function step(t){var p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);el.textContent=Math.round(target*e).toLocaleString('pt-BR')+suffix;if(p<1)requestAnimationFrame(step)}
+      requestAnimationFrame(step);
+    });
+  },{threshold:.5});
+  document.querySelectorAll('[data-count]').forEach(function(n){cio.observe(n)});
+
+  // partículas (rede sutil)
+  var cv=document.getElementById('particles'),cx=cv.getContext('2d'),W,H,dots=[],reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function resize(){var d=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0)}
+  function seed(){dots=[];var n=Math.min(70,Math.floor(W*H/26000));for(var i=0;i<n;i++)dots.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,r:Math.random()*1.4+.5})}
+  function draw(){cx.clearRect(0,0,W,H);
+    for(var i=0;i<dots.length;i++){var d=dots[i];d.x+=d.vx;d.y+=d.vy;if(d.x<0||d.x>W)d.vx*=-1;if(d.y<0||d.y>H)d.vy*=-1;
+      cx.beginPath();cx.arc(d.x,d.y,d.r,0,7);cx.fillStyle='rgba(189,147,249,.5)';cx.fill();
+      for(var j=i+1;j<dots.length;j++){var o=dots[j],dx=d.x-o.x,dy=d.y-o.y,dist=Math.hypot(dx,dy);if(dist<110){cx.beginPath();cx.moveTo(d.x,d.y);cx.lineTo(o.x,o.y);cx.strokeStyle='rgba(189,147,249,'+(0.14*(1-dist/110))+')';cx.lineWidth=1;cx.stroke()}}}
+    if(!reduced)requestAnimationFrame(draw)}
+  resize();seed();if(!reduced)requestAnimationFrame(draw);else draw();
+  window.addEventListener('resize',function(){resize();seed()});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&!reduced)requestAnimationFrame(draw)});
+})();
+</script>
+</body>
+</html>
