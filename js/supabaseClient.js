@@ -140,11 +140,18 @@ const rootExists = async () => {
 const ensureRoot = async (email) =>
   rpc('ensure_root', { _email: email });
 
-const promoteMaster = async ({ org, user }) =>
-  rpc('promote_master', { _org: org, _user: user });
+const promoteMaster = async ({ org, user, level = 1 }) =>
+  rpc('promote_master', { _org: org, _user: user, _level: level });
 
 const demoteMaster = async (user) =>
   rpc('demote_master', { _user: user });
+
+const deleteUser = async (user) =>
+  rpc('delete_user', { _user: user });
+
+const myMasterLevel = async () => {
+  try { return await rpc('my_master_level'); } catch (e) { return 0; }
+};
 
 const addUserToOrg = async ({ org, user, role = 'member' }) =>
   rpc('add_user_to_org', { _org: org, _user: user, _role: role });

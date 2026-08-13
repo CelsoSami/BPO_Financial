@@ -71,7 +71,7 @@ const App = {
 
     document.getElementById('btn-theme').addEventListener('click', toggleTheme);
 
-    document.querySelectorAll('.nav-item, .tabbar-item[data-view]').forEach(btn => {
+    document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => {
         this.go(btn.dataset.view);
         drawer.classList.remove('open');
@@ -97,10 +97,8 @@ const App = {
       if (v === 'transacoes') return await CRUD.txForm(document.getElementById('view'));
       if (v === 'contas') return await CRUD.invForm(document.getElementById('view'));
       if (v === 'clientes') return await CRUD.clienteForm(document.getElementById('view'));
-      if (v === 'usuarios') {
-        const isRoot = this.role === 'root';
-        return await USERS.openCreate(document.getElementById('view'), isRoot);
-      }
+      if (v === 'usuarios') return await USERS.openCreate(document.getElementById('view'));
+      if (v === 'organizacoes') return await ORGS.newOrg(document.getElementById('view'));
       this.go('transacoes'); await new Promise(r => setTimeout(r, 60));
       await CRUD.txForm(document.getElementById('view'));
     } catch (err) {
@@ -115,11 +113,10 @@ const App = {
       dashboard: 'Dashboard', fluxo: 'Fluxo de Caixa', transacoes: 'Transações',
       contas: 'Contas a Pagar / Receber', clientes: 'Clientes',
       relatorios: 'Relatórios & BI', config: 'Configurações',
-      usuarios: 'Usuários'
+      usuarios: 'Usuários', organizacoes: 'Organizações'
     };
     document.getElementById('topbar-title').textContent = names[view] || 'C2 Finance';
     document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
-    document.querySelectorAll('.tabbar-item[data-view]').forEach(n => n.classList.toggle('active', n.dataset.view === view));
     if (location.hash !== '#/' + view) history.replaceState(null, '', '#/' + view);
 
     const root = document.getElementById('view');
@@ -135,7 +132,8 @@ const App = {
         clientes: CRUD.clientes.bind(CRUD),
         relatorios: REPORTS.render.bind(REPORTS),
         config: CRUD.config.bind(CRUD),
-        usuarios: USERS.render.bind(USERS)
+        usuarios: USERS.render.bind(USERS),
+        organizacoes: ORGS.render.bind(ORGS)
       };
       await map[view](root);
       mountIcons(root);
@@ -150,7 +148,7 @@ const App = {
     if (!data.session) return this.showAuth();
     this.user = data.session.user;
     this.showApp();
-    const valid = { dashboard: 1, fluxo: 1, transacoes: 1, contas: 1, clientes: 1, relatorios: 1, config: 1, usuarios: 1 };
+    const valid = { dashboard: 1, fluxo: 1, transacoes: 1, contas: 1, clientes: 1, relatorios: 1, config: 1, usuarios: 1, organizacoes: 1 };
     const fromHash = location.hash.replace('#/', '');
     if (valid[fromHash]) this.view = fromHash;
     await this.autoRoot();
@@ -183,7 +181,9 @@ const App = {
   applyRoleUI() {
     const admin = this.role === 'root' || this.role === 'master';
     document.querySelectorAll('.admin-only').forEach(n => n.classList.toggle('hidden', !admin));
-    if (!admin && this.view === 'usuarios') { this.view = 'dashboard'; location.hash = '#/dashboard'; }
+    if (!admin && (this.view === 'usuarios' || this.view === 'organizacoes')) {
+      this.view = 'dashboard'; location.hash = '#/dashboard';
+    }
   },
 
   showAuth() {
