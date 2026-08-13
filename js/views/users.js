@@ -262,13 +262,12 @@ ORGS.render = async (root) => {
   clear(root);
   const scope = await myScope();
   const isRoot = scope.role === 'root';
-  const isMaster = scope.role === 'master';
-  if (!isRoot && !isMaster) {
+  if (!isRoot) {
     root.appendChild(el(`
       <div class="empty" style="padding-top:80px">
         <div class="big">${icon('briefcase',34)}</div>
         <strong>Sem acesso</strong>
-        <span>Este recurso é exclusivo de administradores.</span>
+        <span>Este recurso é exclusivo do login proprietário.</span>
       </div>
     `));
     mountIcons(root);
@@ -278,14 +277,14 @@ ORGS.render = async (root) => {
   root.appendChild(els(`
     <div class="view-header">
       <h1>Organizações ${roleChip(scope.role, scope.level)}</h1>
-      <p>${isRoot ? 'Gerencie todas as organizações do sistema' : 'Suas organizações'}</p>
+      <p>Gerencie as organizações do sistema e seus status de acesso</p>
     </div>
     <div class="card usr-actions">
       <div class="card-title">${icon('briefcase',15)} Organizações</div>
       <p class="muted" id="org-hint" style="font-size:12px;margin-top:6px">
-        ${isRoot ? 'Somente o Root pode criar ou excluir organizações.' : 'Você administra os usuários da organização ativa.'}
+        Use o interruptor para ativar/desativar. Quando desativada, nenhum login da organização acessa o aplicativo até ser reativada.
       </p>
-      ${isRoot ? `<div class="actions" style="margin-top:12px"><button class="btn primary" id="org-new">${icon('briefcase',16)} Nova organização</button></div>` : ''}
+      <div class="actions" style="margin-top:12px"><button class="btn primary" id="org-new">${icon('briefcase',16)} Nova organização</button></div>
     </div>
     <div id="org-list"></div>
   `));
@@ -304,12 +303,18 @@ ORGS.render = async (root) => {
       box.appendChild(el(`<div class="empty"><strong>Nenhuma organização</strong><span>Use a opção acima para criar uma.</span></div>`));
     }
     orgs.forEach((o) => {
-      const active = o.id === App.getOrg();
-      const right = active
-        ? '<span class="chip ok">Ativa</span>'
-        : isRoot
-          ? `<span style="display:flex;gap:6px"><button class="btn ghost sm" data-switch="${o.id}">${icon('swap',14)} Usar</button><button class="btn ghost sm danger" data-del="${o.id}" data-name="${esc(o.name)}">${icon('trash',14)} Excluir</button></span>`
-          : `<button class="btn ghost sm" data-switch="${o.id}">${icon('swap',14)} Usar</button>`;
+      const isSel = o.id === App.getOrg();
+      const isOn = o.active !== false;
+      const right = `
+        <span class="org-ctrl">
+          <label class="switch" title="${isOn ? 'Ativar/desativar organização' : 'Reativar organização'}">
+            <input type="checkbox" data-tgl="${o.id}" ${isOn ? 'checked' : ''}>
+            <span class="track"></span>
+          </label>
+          <span class="chip ${isOn ? 'ok' : 'danger'}">${isOn ? 'Ativa' : 'Desativada'}</span>
+          ${isSel ? '' : `<button class="btn ghost sm" data-switch="${o.id}">${icon('swap',14)} Usar</button>`}
+          <button class="btn ghost sm danger" data-del="${o.id}" data-name="${esc(o.name)}">${icon('trash',14)} Excluir</button>
+        </span>`;
       box.appendChild(el(`
         <div class="card" style="margin-top:4px">
           <div class="row" style="background:none;border:none;padding:0 0 2px">
@@ -324,6 +329,22 @@ ORGS.render = async (root) => {
 
     box.querySelectorAll('[data-switch]').forEach(b => b.addEventListener('click', () => {
       App.setOrg(b.dataset.switch); App.refresh(); toast('Organização alterada.');
+    }));
+    box.querySelectorAll('[data-tgl]').forEach(t => t.addEventListener('change', async () => {
+      const id = t.dataset.tgl;
+      const on = t.checked;
+      const name = t.closest('.card')?.querySelector('.body strong')?.textContent || 'organização';
+      try {
+        await toggleOrgActive({ org: id, active: on });
+        toast(on ? `"${name}" ativada.` : `"${name}" desativada.`);
+        if (!on && App.getOrg() === id) {
+          App.setOrg(null); try { localStorage.removeItem(SESSION_LABEL); } catch(e){} App.orgId = null;
+        }
+        App.refresh();
+      } catch (e) {
+        t.checked = !on;
+        toast(msgOf(e), 'err');
+      }
     }));
     box.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
       const id = b.dataset.del;

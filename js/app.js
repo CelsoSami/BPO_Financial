@@ -120,6 +120,18 @@ const App = {
     const { data } = await getSession();
     if (!data.session) return this.showAuth();
     this.user = data.session.user;
+
+    // Bloqueio de acesso: organização desativada => volta ao login com aviso
+    if (await myOrgsInactive()) {
+      await signOut().catch(() => {});
+      this.impersonation = null;
+      this.showAuth();
+      const box = document.getElementById('login-msg');
+      box.className = 'msg err';
+      box.textContent = 'Sua organização está desativada. Entre em contato com a administradora para reativar o acesso.';
+      return;
+    }
+
     this.showApp();
     const info = await impersonationInfo();
     this.impersonation = (info && info[0]) || null;
@@ -156,9 +168,12 @@ const App = {
   // Mostra/oculta itens exclusivos de administradores (Root/Master)
   applyRoleUI() {
     const admin = this.role === 'root' || this.role === 'master';
+    const root = this.role === 'root' && !this.impersonation;
     const hideAdmin = !admin || !!this.impersonation;
     document.querySelectorAll('.admin-only').forEach(n => n.classList.toggle('hidden', hideAdmin));
-    if (hideAdmin && (this.view === 'usuarios' || this.view === 'organizacoes')) {
+    document.querySelectorAll('.root-only').forEach(n => n.classList.toggle('hidden', !root));
+    if ((hideAdmin && (this.view === 'usuarios' || this.view === 'organizacoes')) ||
+        (!root && this.view === 'organizacoes')) {
       this.view = 'dashboard'; location.hash = '#/dashboard';
     }
   },

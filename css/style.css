@@ -279,6 +279,23 @@ html[data-theme="day"] #home.sky::after{
 }
 .impersonation-bar .imp-stop:hover{background:rgba(255,255,255,.28)}
 
+/* Interruptor de ativação de organização */
+.org-ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.switch{position:relative;display:inline-flex;width:46px;height:26px;flex:none;cursor:pointer}
+.switch input{position:absolute;inset:0;opacity:0;cursor:pointer;margin:0}
+.switch .track{
+  position:absolute;inset:0;border-radius:999px;
+  background:var(--card-strong);border:1px solid var(--stroke);
+  transition:background .35s var(--ease), border-color .3s;
+}
+.switch .track::after{
+  content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+  background:var(--text);opacity:.85;
+  transition:transform .35s var(--spring), background .3s;
+}
+.switch input:checked + .track{background:var(--ok);border-color:transparent}
+.switch input:checked + .track::after{transform:translateX(20px);background:#fff}
+
 /* Hambúrguer */
 .hamb{display:flex;flex-direction:column;justify-content:center;gap:5px;width:22px;height:22px}
 .hamb i{height:2px;border-radius:2px;background:var(--text);transition:all .45s var(--spring)}

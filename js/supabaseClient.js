@@ -170,6 +170,15 @@ const impersonationInfo = async () => {
   try { return await rpc('impersonation_info'); } catch (e) { return []; }
 };
 
+// ---------------- Ativação de organização ----------------
+const toggleOrgActive = async ({ org, active }) =>
+  rpc('toggle_org_active', { _org: org, _active: active });
+
+// O usuário pertence apenas a organizações desativadas?
+const myOrgsInactive = async () => {
+  try { return !!await rpc('my_orgs_inactive'); } catch (e) { return false; }
+};
+
 // Cria uma conta de usuário sem trocar a sessão atual do administrador.
 // Retorna o usuário criado (auth.users).
 const adminCreateUser = async ({ email, password, name }) => {
