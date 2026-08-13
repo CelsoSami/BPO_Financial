@@ -308,7 +308,9 @@ ORGS.render = async (root) => {
       const actions = `
         <span class="org-actions">
           ${isSel ? `<span class="chip ghost">Org ativa</span>` : `<button class="btn ghost sm" data-switch="${o.id}">${icon('swap',14)} Usar</button>`}
-          <button class="btn ghost sm danger" data-del="${o.id}" data-name="${esc(o.name)}">${icon('trash',14)} Excluir</button>
+          ${o.name === 'Minha Organização'
+            ? `<span class="chip ghost" title="Organização principal — não pode ser excluída">${icon('shield',14)} Protegida</span>`
+            : `<button class="btn ghost sm danger" data-del="${o.id}" data-name="${esc(o.name)}">${icon('trash',14)} Excluir</button>`}
         </span>`;
       box.appendChild(el(`
         <div class="card" style="margin-top:4px">
