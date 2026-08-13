@@ -159,6 +159,17 @@ const addUserToOrg = async ({ org, user, role = 'member' }) =>
 const removeUserFromOrg = async ({ org, user }) =>
   rpc('remove_user_from_org', { _org: org, _user: user });
 
+// ---------------- "Enxergar como" (impersonação para auditoria) ----------------
+const startImpersonate = async (user) =>
+  rpc('start_impersonate', { _user: user });
+
+const stopImpersonate = async () =>
+  rpc('stop_impersonate');
+
+const impersonationInfo = async () => {
+  try { return await rpc('impersonation_info'); } catch (e) { return []; }
+};
+
 // Cria uma conta de usuário sem trocar a sessão atual do administrador.
 // Retorna o usuário criado (auth.users).
 const adminCreateUser = async ({ email, password, name }) => {

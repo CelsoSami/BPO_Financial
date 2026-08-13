@@ -261,6 +261,24 @@ html[data-theme="day"] #home.sky::after{
 .topbar-title{flex:1;font-size:16.5px;font-weight:700;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar-right{display:flex;gap:8px}
 
+/* Banner "Enxergar como" (modo auditoria) */
+.impersonation-bar{
+  position:sticky;top:0;z-index:60;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:9px 14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;font-size:13px;font-weight:500;
+  box-shadow:0 8px 24px -12px var(--glow);
+}
+.impersonation-bar.hidden{display:none}
+.impersonation-bar .imp-eye{display:inline-flex;opacity:.95}
+.impersonation-bar strong{font-weight:800;letter-spacing:.2px}
+.impersonation-bar .imp-stop{
+  margin-left:auto;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);
+  color:#fff;font-weight:700;
+}
+.impersonation-bar .imp-stop:hover{background:rgba(255,255,255,.28)}
+
 /* Hambúrguer */
 .hamb{display:flex;flex-direction:column;justify-content:center;gap:5px;width:22px;height:22px}
 .hamb i{height:2px;border-radius:2px;background:var(--text);transition:all .45s var(--spring)}

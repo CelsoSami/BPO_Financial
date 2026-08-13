@@ -9,6 +9,7 @@ const App = {
   user: null,
   role: 'member',
   _orgName: '—',
+  impersonation: null,
 
   init() {
     this.bindAuth();
@@ -48,6 +49,9 @@ const App = {
     });
 
     document.getElementById('btn-logout').addEventListener('click', async () => {
+      if (this.impersonation) await stopImpersonate().catch(() => {});
+      this.impersonation = null;
+      this.renderImpersonationBar();
       await signOut();
       this.showAuth();
     });
@@ -117,6 +121,8 @@ const App = {
     if (!data.session) return this.showAuth();
     this.user = data.session.user;
     this.showApp();
+    const info = await impersonationInfo();
+    this.impersonation = (info && info[0]) || null;
     const valid = { dashboard: 1, fluxo: 1, transacoes: 1, contas: 1, clientes: 1, relatorios: 1, config: 1, usuarios: 1, organizacoes: 1 };
     const fromHash = location.hash.replace('#/', '');
     if (valid[fromHash]) this.view = fromHash;
@@ -124,6 +130,7 @@ const App = {
     await this.restoreOrg();
     this.role = await myRole().catch(() => 'member');
     this.applyRoleUI();
+    this.renderImpersonationBar();
     await this.go(this.view);
     this.loadDrawerMeta();
   },
@@ -149,8 +156,9 @@ const App = {
   // Mostra/oculta itens exclusivos de administradores (Root/Master)
   applyRoleUI() {
     const admin = this.role === 'root' || this.role === 'master';
-    document.querySelectorAll('.admin-only').forEach(n => n.classList.toggle('hidden', !admin));
-    if (!admin && (this.view === 'usuarios' || this.view === 'organizacoes')) {
+    const hideAdmin = !admin || !!this.impersonation;
+    document.querySelectorAll('.admin-only').forEach(n => n.classList.toggle('hidden', hideAdmin));
+    if (hideAdmin && (this.view === 'usuarios' || this.view === 'organizacoes')) {
       this.view = 'dashboard'; location.hash = '#/dashboard';
     }
   },
@@ -174,6 +182,12 @@ const App = {
       const orgs = await listMyOrgs();
       if (orgId && orgs.some(o => o.id === orgId)) { this.orgId = orgId; }
       else if (orgs.length) { this.orgId = orgs[0].id; try { localStorage.setItem(SESSION_LABEL, this.orgId); } catch(e){} }
+      else if (this.impersonation) {
+        // "enxergando como" alguém que ainda não tem organização: não cria org
+        this.orgId = null;
+        this.view = 'dashboard';
+        toast('O usuário visualizado ainda não está vinculado a nenhuma organização.', 'info');
+      }
       else {
         // sem organização
         this.role = await myRole();
@@ -232,6 +246,59 @@ const App = {
     this.applyRoleUI();
     this.loadDrawerMeta();
     await this.go(this.view);
+  },
+
+  // ---------- "Enxergar como" (impersonação de auditoria) ----------
+  renderImpersonationBar() {
+    const bar = document.getElementById('impersonation-bar');
+    const fab = document.getElementById('fab');
+    if (!bar) return;
+    if (!this.impersonation) {
+      bar.classList.add('hidden');
+      if (fab) fab.classList.remove('hidden');
+      bar.innerHTML = '';
+      return;
+    }
+    bar.innerHTML = `
+      <span class="imp-eye">${icon('eye', 15)}</span>
+      <span class="imp-text">Você está vendo como <strong>${esc(this.impersonation.name || 'usuário')}</strong>${this.impersonation.email ? ` (${esc(this.impersonation.email)})` : ''}</span>
+      <button class="btn ghost sm imp-stop" id="imp-stop">${icon('x', 13)} Voltar ao meu usuário</button>
+    `;
+    mountIcons(bar);
+    bar.classList.remove('hidden');
+    if (fab) fab.classList.add('hidden');
+    bar.querySelector('#imp-stop').addEventListener('click', () => this.endViewAs());
+  },
+
+  async beginViewAs(userId) {
+    try {
+      await startImpersonate(userId);
+      const info = await impersonationInfo();
+      this.impersonation = (info && info[0]) || { target_id: userId };
+      this.orgId = null;
+      try { localStorage.removeItem(SESSION_LABEL); } catch(e){}
+      this.renderImpersonationBar();
+      await this.restoreOrg();
+      this.role = await myRole().catch(() => 'member');
+      this.applyRoleUI();
+      await this.go(this.view);
+      this.loadDrawerMeta();
+    } catch (e) {
+      toast(msgOf(e), 'err');
+    }
+  },
+
+  async endViewAs() {
+    try { await stopImpersonate(); } catch(e) {}
+    this.impersonation = null;
+    this.orgId = null;
+    try { localStorage.removeItem(SESSION_LABEL); } catch(e){}
+    this.renderImpersonationBar();
+    await this.restoreOrg();
+    this.role = await myRole().catch(() => 'member');
+    this.applyRoleUI();
+    await this.go(this.view);
+    this.loadDrawerMeta();
   }
 };
 

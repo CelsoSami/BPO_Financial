@@ -137,7 +137,15 @@ USERS.userRow = ({ org, membership, profile, scope, orphan }) => {
   const userRole = profile.role || 'member';
   const userLevel = profile.master_level || 0;
   const mRole = membership?.role || '';
+  const canViewAs = !isMe && !App.impersonation && (
+    scope.role === 'root'
+    || (scope.role === 'master' && scope.level === 1 && !!membership && userRole === 'member')
+  );
   const actions = [];
+
+  if (canViewAs) {
+    actions.push(`<button class="btn ghost sm" data-act="viewas" data-user="${profile.id}" data-name="${esc(profile.name || profile.email || 'usuário')}">${icon('eye',14)} Enxergar como</button>`);
+  }
 
   if (scope.role === 'root' && !isMe) {
     // Root promove/rebaixa/exclui qualquer usuário
@@ -376,6 +384,18 @@ document.addEventListener('click', async (e) => {
     if (act === 'demote') {
       await demoteMaster(uid);
       toast('Usuário rebaixado.'); await App.refresh(); return;
+    }
+    if (act === 'viewas') {
+      openModal('Enxergar como', `
+        <p class="muted">Ver o painel como <strong>${esc(btn.dataset.name)}</strong> para validar o que este usuário enxerga.<br><br>Ao terminar, use o botão "Voltar ao meu usuário".</p>
+        <div class="actions"><button class="btn ghost" id="md-cancel">Cancelar</button>
+        <button class="btn primary" id="md-confirm">${icon('eye',16)} Enxergar como</button></div>`);
+      document.getElementById('md-cancel').addEventListener('click', closeModal);
+      document.getElementById('md-confirm').addEventListener('click', async () => {
+        closeModal();
+        await App.beginViewAs(uid);
+      });
+      return;
     }
     if (act === 'rm') {
       openModal('Remover da organização', `
