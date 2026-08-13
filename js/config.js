@@ -19,6 +19,11 @@ const LOCALE = 'pt-BR';
 const SESSION_LABEL = 'c2finance.org';   // chave para org ativa
 const SESSION_THEME = 'c2finance.theme'; // chave para tema
 
+// E-mail do administrador principal (Root). Este usuário assume
+// automaticamente o papel de Root no primeiro acesso, sem precisar
+// clicar em nenhum botão de bootstrap.
+const ROOT_EMAIL = 'celso_scjunior@hotmail.com';
+
 const CATEGORY_COLORS = [
   { color: '#22c55e', label: 'Verde' },
   { color: '#10b981', label: 'Esmeralda' },

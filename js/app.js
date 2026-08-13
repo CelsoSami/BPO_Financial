@@ -153,11 +153,30 @@ const App = {
     const valid = { dashboard: 1, fluxo: 1, transacoes: 1, contas: 1, clientes: 1, relatorios: 1, config: 1, usuarios: 1 };
     const fromHash = location.hash.replace('#/', '');
     if (valid[fromHash]) this.view = fromHash;
+    await this.autoRoot();
     await this.restoreOrg();
     this.role = await myRole().catch(() => 'member');
     this.applyRoleUI();
     await this.go(this.view);
     this.loadDrawerMeta();
+  },
+
+  // O usuário principal (email definido em ROOT_EMAIL) assume o papel
+  // de administrador (Root) automaticamente no primeiro acesso.
+  async autoRoot() {
+    if (!this.user?.email || !ROOT_EMAIL) return;
+    if (this.user.email.toLowerCase() !== ROOT_EMAIL.toLowerCase()) return;
+    try {
+      const role = await myRole();
+      if (role === 'root') { this.role = 'root'; return; }
+      // Chamada idempotente: garante que este e-mail seja o Root,
+      // transferindo o papel de volta se houver um root diferente.
+      await ensureRoot(this.user.email);
+      this.role = 'root';
+    } catch (e) {
+      console.error('[autoRoot]', e);
+      this.role = await myRole().catch(() => 'member');
+    }
   },
 
   // Mostra/oculta itens exclusivos de administradores (Root/Master)
@@ -187,14 +206,17 @@ const App = {
       if (orgId && orgs.some(o => o.id === orgId)) { this.orgId = orgId; }
       else if (orgs.length) { this.orgId = orgs[0].id; try { localStorage.setItem(SESSION_LABEL, this.orgId); } catch(e){} }
       else {
-        // sem organização: garante o papel (bootstrap do primeiro acesso)
+        // sem organização
         this.role = await myRole();
+        // Só o usuário definido em ROOT_EMAIL pode se tornar Root.
+        const isRootEmail = !!ROOT_EMAIL && !!this.user?.email &&
+          this.user.email.toLowerCase() === ROOT_EMAIL.toLowerCase();
         const hasRoot = await rootExists().catch(() => false);
-        if (this.role !== 'root' && !hasRoot) {
-          // primeiro humano a usar o sistema assume o papel de administrador principal
-          try { await ensureRoot(this.user?.email || ''); this.role = 'root'; } catch(e) {}
+        if (this.role !== 'root' && !hasRoot && isRootEmail) {
+          // primeiro acesso do usuário principal: assume o papel de administrador
+          try { await ensureRoot(this.user.email); this.role = 'root'; } catch(e) {}
         }
-        if (this.role === 'root' || !hasRoot) {
+        if (this.role === 'root') {
           // root criando a própria organização inicial
           const name = this.user?.user_metadata?.name ? `${this.user.user_metadata.name}'s Org` : 'Minha Organização';
           try {
@@ -203,7 +225,7 @@ const App = {
             toast('Organização inicial criada. Bem-vindo ao C2 Finance!');
           } catch(e) { offerSetup(document.getElementById('view'), e); }
         } else {
-          // membro aguardando vínculo a uma organização
+          // usuário ainda sem organização: aguarda ser vinculado por um admin
           this.orgId = null;
           this.view = 'config';
           toast('Você ainda não foi vinculado a nenhuma organização.', 'info');

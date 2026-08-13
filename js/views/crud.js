@@ -726,6 +726,8 @@ CRUD.config = async (root) => {
   const role = await myRole().catch(() => 'member');
   const hasRoot = await rootExists().catch(() => true);
   const isRootRole = role === 'root' || (profile && profile.role === 'root');
+  const isRootEmail = !!ROOT_EMAIL && !!user?.email &&
+    user.email.toLowerCase() === ROOT_EMAIL.toLowerCase();
 
   // Bootstrap: usuário sem papel que ainda não tem root no sistema
   const needBootstrap = !isRootRole && !hasRoot;
@@ -739,6 +741,7 @@ CRUD.config = async (root) => {
       <div class="actions" style="margin-top:12px">
         <button class="btn primary" id="cf-boot-root">${icon('shield',16)} Assumir como administrador principal</button>
       </div>
+      <p id="cf-boot-root-msg" class="msg" style="display:none"></p>
     </div>` : ''}
     <div class="card">
       <div class="card-title">Minha Conta</div>
@@ -770,13 +773,34 @@ CRUD.config = async (root) => {
   `));
 
   if (needBootstrap) {
-    root.querySelector('#cf-boot-root').addEventListener('click', async () => {
+    const bootBtn = root.querySelector('#cf-boot-root');
+    if (isRootEmail) {
+      // Usuário principal definido: assume Root automaticamente, sem clique
+      try {
+        await ensureRoot(user.email);
+        App.role = 'root';
+        toast('Você é o administrador principal (Root).');
+        App.refresh();
+      } catch (e) {
+        bootBtn.style.display = 'none';
+        const box = root.querySelector('#cf-boot-root-msg');
+        if (box) { box.textContent = msgOf(e); box.classList.add('err'); box.style.display = 'block'; }
+      }
+      return;
+    }
+    bootBtn.addEventListener('click', async () => {
+      bootBtn.disabled = true;
+      const box = root.querySelector('#cf-boot-root-msg');
       try {
         await ensureRoot(user?.email || '');
         App.role = 'root';
         toast('Agora você é o administrador principal (Root)!');
         App.refresh();
-      } catch (e) { toast(msgOf(e), 'err'); }
+      } catch (e) {
+        if (box) { box.textContent = msgOf(e); box.classList.add('err'); box.style.display = 'block'; }
+        toast(msgOf(e), 'err');
+        bootBtn.disabled = false;
+      }
     });
   }
 
