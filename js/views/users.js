@@ -305,23 +305,29 @@ ORGS.render = async (root) => {
     orgs.forEach((o) => {
       const isSel = o.id === App.getOrg();
       const isOn = o.active !== false;
-      const right = `
-        <span class="org-ctrl">
-          <label class="switch" title="${isOn ? 'Ativar/desativar organização' : 'Reativar organização'}">
-            <input type="checkbox" data-tgl="${o.id}" ${isOn ? 'checked' : ''}>
-            <span class="track"></span>
-          </label>
-          <span class="chip ${isOn ? 'ok' : 'danger'}">${isOn ? 'Ativa' : 'Desativada'}</span>
-          ${isSel ? '' : `<button class="btn ghost sm" data-switch="${o.id}">${icon('swap',14)} Usar</button>`}
+      const actions = `
+        <span class="org-actions">
+          ${isSel ? `<span class="chip ghost">Org ativa</span>` : `<button class="btn ghost sm" data-switch="${o.id}">${icon('swap',14)} Usar</button>`}
           <button class="btn ghost sm danger" data-del="${o.id}" data-name="${esc(o.name)}">${icon('trash',14)} Excluir</button>
         </span>`;
       box.appendChild(el(`
         <div class="card" style="margin-top:4px">
-          <div class="row" style="background:none;border:none;padding:0 0 2px">
-            <div class="ico">${esc(initials(o.name))}</div>
-            <div class="body"><strong>${esc(o.name)}</strong>
-              <span>${esc(o.segment || 'Organização')} · ${counts[o.id] || 0} usuário(s)</span></div>
-            <div class="right">${right}</div>
+          <div class="org-grid">
+            <div class="col-info">
+              <div class="row" style="background:none;border:none;padding:0 0 2px">
+                <div class="ico">${esc(initials(o.name))}</div>
+                <div class="body"><strong>${esc(o.name)}</strong>
+                  <span>${esc(o.segment || 'Organização')} · ${counts[o.id] || 0} usuário(s)</span></div>
+              </div>
+              ${actions}
+            </div>
+            <div class="col-toggle">
+              <label class="switch" title="${isOn ? 'Ativar/desativar organização' : 'Reativar organização'}">
+                <input type="checkbox" data-tgl="${o.id}" ${isOn ? 'checked' : ''}>
+                <span class="track"></span>
+              </label>
+              <span class="chip ${isOn ? 'ok' : 'danger'}">${isOn ? 'Ativa' : 'Desativada'}</span>
+            </div>
           </div>
         </div>
       `));

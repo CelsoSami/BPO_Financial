@@ -279,8 +279,30 @@ html[data-theme="day"] #home.sky::after{
 }
 .impersonation-bar .imp-stop:hover{background:rgba(255,255,255,.28)}
 
+/* Card de organização: coluna 1 = dados, coluna 2 = toggle exclusivo */
+.org-grid{
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  gap:16px;
+}
+.org-grid .col-info{
+  display:flex;flex-direction:column;gap:8px;min-width:0;
+}
+.org-grid .org-actions{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.org-grid .col-toggle{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:10px 12px;
+  border-left:1px solid var(--stroke-soft);
+  flex:none;
+}
+@media (max-width:480px){
+  .org-grid .col-toggle{border-left:none;padding-left:0}
+}
+
 /* Interruptor de ativação de organização */
-.org-ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .switch{position:relative;display:inline-flex;width:46px;height:26px;flex:none;cursor:pointer}
 .switch input{position:absolute;inset:0;opacity:0;cursor:pointer;margin:0}
 .switch .track{
